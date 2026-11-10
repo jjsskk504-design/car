@@ -1,0 +1,11 @@
+<opensource-lab>\venv\Lib\site-packages\gymnasium\envs\registration.py:511: DeprecationWarning: [33mWARN: The environment merge-v0 is out of date. You should consider upgrading to version `v1`.[0m
+  logger.deprecation(
+<opensource-lab>\venv\Lib\site-packages\gymnasium\envs\registration.py:511: DeprecationWarning: [33mWARN: The environment intersection-v0 is out of date. You should consider upgrading to version `v2`.[0m
+  logger.deprecation(
+<opensource-lab>\venv\Lib\site-packages\gymnasium\envs\registration.py:511: DeprecationWarning: [33mWARN: The environment roundabout-v0 is out of date. You should consider upgrading to version `v1`.[0m
+  logger.deprecation(
+python=3.13.2 os=Windows-11-10.0.26200-SP0 highway_env=1.12.2.dev0
+PASS highway-v0: steps=30 vehicles=51 render=(150, 600, 3)
+PASS merge-v0: steps=10 vehicles=5 render=(150, 600, 3)
+PASS intersection-v0: steps=9 vehicles=13 render=(600, 600, 3)
+PASS roundabout-v0: steps=11 vehicles=5 render=(600, 600, 3)

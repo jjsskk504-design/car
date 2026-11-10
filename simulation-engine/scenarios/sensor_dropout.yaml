@@ -1,0 +1,17 @@
+name: sensor_dropout
+description: normal과 같은 교통에 센서 누락(의도적)과 위치 노이즈를 주입
+seed: 107
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: car_01, lane: 2, x: 220, speed: 24}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+  - {id: car_03, lane: 1, x: 245, speed: 25}
+  - {id: car_04, lane: 2, x: 170, speed: 25}
+  - {id: car_05, lane: 0, x: 260, speed: 23}
+events:
+  - {t_s: 3, t_end_s: 5, type: sensor_dropout, vehicle: car_01, note: 2초 관측 누락}
+  - {t_s: 7, t_end_s: 7.5, type: sensor_dropout, vehicle: car_03, note: 0.5초 관측 누락}
+  - {t_s: 2, t_end_s: 10, type: sensor_noise, vehicle: car_05, value: 0.3, note: 위치 노이즈 표준편차 0.3m}

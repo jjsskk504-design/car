@@ -1,0 +1,17 @@
+== CARLA 실험 기록 (2026-11-10)
+clone: git clone --depth 1 https://github.com/carla-simulator/carla.git
+  -> commit 18ffa06 (2026-11-10), 브랜치 ue58-dev (Unreal Engine 5.8 판), 644MB, LICENSE = MIT (에셋은 별도 라이선스)
+
+== Python 클라이언트 설치
+python -m venv venv-carla
+venv-carla/Scripts/python -m pip install carla==0.9.16
+ERROR: Could not find a version that satisfies the requirement carla==0.9.16 (from versions: 0.9.5)
+ERROR: No matching distribution found for carla==0.9.16
+원인: PyPI carla 0.9.16 휠은 cp310/cp311/cp312 만 제공. 이 PC는 Python 3.13.2 만 설치됨.
+
+== 서버(시뮬레이터) 요구사항 (README) vs 이 PC
+요구: RAM 32GB+, VRAM 16GB+, Ubuntu 22.04/24.04 또는 Windows 11, UE5.8 소스 빌드(대용량 디스크)
+PC  : RAM 15.3GB, NVIDIA GeForce RTX 4060 Laptop GPU (+ AMD Radeon 780M), Windows 11, C: 여유 5GB
+
+== 결론: BLOCKED (하드웨어·디스크 부족). 클라이언트만 설치해도 접속할 서버가 없어 실행 검증 불가.
+대안: Python 3.12 + 사전 빌드 패키지(0.9.16 UE4판) 를 32GB RAM / 100GB+ 여유 디스크 PC 에서 시험.

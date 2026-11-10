@@ -1,0 +1,15 @@
+name: sudden_braking
+description: 같은 차선 전방 30m 화물차가 t=4s에 25->5 m/s 급감속 (최대 -6 m/s^2)
+seed: 102
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: truck_01, lane: 1, x: 230, speed: 25, length_m: 10.0, width_m: 2.5}
+  - {id: car_01, lane: 2, x: 220, speed: 24}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+  - {id: car_04, lane: 2, x: 170, speed: 25}
+  - {id: car_05, lane: 0, x: 260, speed: 23}
+events:
+  - {t_s: 4, type: set_target_speed, vehicle: truck_01, value: 5, note: 전방 화물차 급감속}

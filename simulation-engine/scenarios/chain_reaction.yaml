@@ -1,0 +1,16 @@
+name: chain_reaction
+description: 선두 화물차 급감속 -> 앞차 감속·회피 차선변경 -> 자차·후속차 연쇄 감속
+seed: 106
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: truck_01, lane: 1, x: 260, speed: 25, length_m: 10.0, width_m: 2.5}
+  - {id: car_11, lane: 1, x: 232, speed: 25}
+  - {id: car_12, lane: 1, x: 175, speed: 25}
+  - {id: car_01, lane: 2, x: 165, speed: 24}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+events:
+  - {t_s: 4, type: set_target_speed, vehicle: truck_01, value: 3, note: 선두 화물차 급감속}
+  - {t_s: 5, type: change_lane, vehicle: car_11, value: 2, note: 앞차 L2 -> L3 회피}

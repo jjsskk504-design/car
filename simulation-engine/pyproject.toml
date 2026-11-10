@@ -1,0 +1,5 @@
+# 설치형 패키지가 아니라 simulation-engine/ 폴더에서 바로 실행한다 (python -m generators ...).
+# 의존성: requirements.txt (직접), requirements.lock.txt (검증한 전체 고정 버전)
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
