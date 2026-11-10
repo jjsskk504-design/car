@@ -80,8 +80,8 @@ submodule / vendoring 은 쓰지 않았다. 네 저장소 모두 필요한 부�
 
 ## 7. Git
 
-- 로컬 저장소 `PRISM/` (main: 초기 커밋, 작업은 `feature/vehicle`)
-- 원격: https://github.com/ftre235/prism-android-app (private). `main` 직접 작업 없음, `feature/vehicle` → `main` PR 로 제출
+- 공유 저장소: https://github.com/qwon4466/PRISM — 이 모듈은 `vehicle-integration/` 만 수정. 작업 브랜치 `feature/vehicle` → `main` PR (main 직접 push 없음)
+- 개인 백업 저장소: https://github.com/ftre235/prism-android-app (private, 같은 커밋 내용)
 
 ## 8. 남은 문제
 
