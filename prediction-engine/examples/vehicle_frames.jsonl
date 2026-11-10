@@ -1,0 +1,4 @@
+{"timestamp_ms":0,"ego_id":"ego","vehicles":[{"id":"ego","x":0.0,"y":0.0,"vx":0.0,"vy":10.0,"heading_rad":1.5707963267948966,"length_m":4.8,"width_m":1.9,"lane_id":"L1"},{"id":"car_01","x":1.0,"y":20.0,"vx":0.0,"vy":5.0,"heading_rad":1.5707963267948966,"length_m":4.5,"width_m":1.8,"lane_id":"L1"}]}
+{"timestamp_ms":1000,"ego_id":"ego","vehicles":[{"id":"ego","x":0.0,"y":0.0,"vx":0.0,"vy":10.0,"heading_rad":1.5707963267948966,"length_m":4.8,"width_m":1.9,"lane_id":"L1"},{"id":"car_01","x":1.0,"y":15.0,"vx":0.0,"vy":5.0,"heading_rad":1.5707963267948966,"length_m":4.5,"width_m":1.8,"lane_id":"L1"}]}
+{"timestamp_ms":2000,"ego_id":"ego","vehicles":[{"id":"ego","x":0.0,"y":0.0,"vx":0.0,"vy":10.0,"heading_rad":1.5707963267948966,"length_m":4.8,"width_m":1.9,"lane_id":"L1"},{"id":"car_01","x":1.0,"y":10.0,"vx":0.0,"vy":5.0,"heading_rad":1.5707963267948966,"length_m":4.5,"width_m":1.8,"lane_id":"L1"}]}
+
