@@ -1,0 +1,101 @@
+{
+  "risks": [
+    {
+      "level": "NORMAL",
+      "cause_codes": [],
+      "vehicle_id": "T1"
+    },
+    {
+      "level": "WARNING",
+      "trajectory_candidate_id": "R1-lcl",
+      "cause_codes": [
+        "LANE_INTRUSION",
+        "HEADWAY_SHORT"
+      ],
+      "vehicle_id": "R1",
+      "source_vehicle_ids": ["T1"],
+      "risk_region": [
+        {
+          "x": 0.09,
+          "y": -12.72
+        },
+        {
+          "x": 3.31,
+          "y": -12.72
+        },
+        {
+          "x": 3.31,
+          "y": -4.91
+        },
+        {
+          "x": 3.23,
+          "y": 0.72
+        },
+        {
+          "x": 3.15,
+          "y": 5.72
+        },
+        {
+          "x": 3.08,
+          "y": 10.1
+        },
+        {
+          "x": 3,
+          "y": 13.86
+        },
+        {
+          "x": 2.93,
+          "y": 16.98
+        },
+        {
+          "x": 2.85,
+          "y": 19.49
+        },
+        {
+          "x": 0.55,
+          "y": 19.49
+        },
+        {
+          "x": 0.47,
+          "y": 16.98
+        },
+        {
+          "x": 0.4,
+          "y": 13.86
+        },
+        {
+          "x": 0.32,
+          "y": 10.1
+        },
+        {
+          "x": 0.25,
+          "y": 5.72
+        },
+        {
+          "x": 0.17,
+          "y": 0.72
+        },
+        {
+          "x": 0.09,
+          "y": -4.91
+        }
+      ]
+    },
+    {
+      "level": "NORMAL",
+      "cause_codes": [],
+      "vehicle_id": "F1"
+    },
+    {
+      "level": "NORMAL",
+      "cause_codes": [],
+      "vehicle_id": "L1"
+    },
+    {
+      "level": "NORMAL",
+      "cause_codes": [],
+      "vehicle_id": "B1"
+    }
+  ],
+  "timestamp_ms": 1700000004500
+}
