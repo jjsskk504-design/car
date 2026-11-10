@@ -3,6 +3,7 @@ package com.prism.vehicle.app.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -27,8 +28,8 @@ import kotlin.math.min
  */
 
 private const val X_RANGE_M = 9.0   // 좌우 ±9m (3차선)
-private const val Y_MIN_M = -30.0
-private const val Y_MAX_M = 70.0
+private const val Y_MIN_M = -20.0
+private const val Y_MAX_M = 60.0
 private const val LANE_W = 3.6
 
 fun riskColor(level: RiskLevel?): Color = when (level) {
@@ -41,7 +42,7 @@ fun riskColor(level: RiskLevel?): Color = when (level) {
 @Composable
 fun PlaceholderRadar(snapshot: Snapshot, modifier: Modifier = Modifier) {
     val measurer = rememberTextMeasurer()
-    Canvas(modifier) {
+    Canvas(modifier.clipToBounds()) {
         drawRect(Color(0xFF15181D))
         val scale = min(size.width / (2 * X_RANGE_M), size.height / (Y_MAX_M - Y_MIN_M)).toFloat()
         val cx = size.width / 2

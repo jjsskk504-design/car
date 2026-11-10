@@ -19,7 +19,7 @@ PRISM 4개 독립 엔진의 결과(JSON)를 하나의 Android 차량용 앱에�
 | 모드 | 데이터 | 상태 |
 |---|---|---|
 | Simulation Mode | assets 의 시뮬레이션·예측·위험 JSON 재생. SDK 호출 없음. 정차(P)는 화면 스위치로 가정 | 기본, 공모전 시연용 |
-| Pleos Context Mode | 기어·위치·내비 상태·TTS 만 실제 Pleos SDK. 주변 차량 위험은 여전히 시뮬레이션이라고 표시 | 에뮬레이터 검증 결과는 `SDK_COMPATIBILITY.md` |
+| Pleos Context Mode | 기어·위치·내비 상태·TTS 만 실제 Pleos SDK. 주변 차량 위험은 여전히 시뮬레이션이라고 표시 | Pleos 에뮬레이터에서 4개 SDK 모두 CONFIRMED (`SDK_COMPATIBILITY.md`) |
 | ADAS Mode | — | **비활성**. 공개 SDK 에 주변 차량 객체 API 없음, 공식 권한 확인 전 구현하지 않음 |
 
 주행 중 화면은 위험 등급 한 줄만 보여 준다. 시간 이동·배속·원인 코드·TTC 는 **정차(P) 후 리플레이** 화면에서만 연다.
