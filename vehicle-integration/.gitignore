@@ -1,0 +1,12 @@
+.gradle/
+build/
+/local.properties
+.idea/
+*.iml
+.kotlin/
+captures/
+# 서명 키·비밀값은 저장소에 두지 않는다
+*.jks
+*.keystore
+keystore.properties
+*.log
