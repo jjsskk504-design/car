@@ -1,0 +1,20 @@
+{
+  "scenario_id": "sudden_brake",
+  "title": "앞차 급감속",
+  "duration_ms": 10000,
+  "step_ms": 100,
+  "seed": 0,
+  "ego_id": "ego",
+  "event_annotation": [
+    {
+      "t_ms": 3000,
+      "label": "car_01 급감속 -7 m/s²"
+    },
+    {
+      "t_ms": 5500,
+      "label": "car_01 감속 종료"
+    }
+  ],
+  "provenance": "MOCK: vehicle-integration/tests/tools/make_mock_scenarios.py (03/01/02 엔진 산출물 아님)",
+  "mock": true
+}

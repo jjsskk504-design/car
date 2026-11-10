@@ -1,0 +1,1 @@
+{"schema_version": "1.0", "timestamp_ms": 0, "risk_objects": [{"vehicle_id": "car_01", "risk_level": "DANGER", "reason_codes": [], "ttc_s": null, "risk_zones": []}]}
