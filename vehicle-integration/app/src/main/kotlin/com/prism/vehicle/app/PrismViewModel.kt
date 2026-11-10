@@ -171,6 +171,11 @@ class PrismViewModel(app: Application) : AndroidViewModel(app) {
         if (_ui.value.mode == AppMode.PLEOS_CONTEXT) pleos.start()
     }
 
+    fun restartSdk() {
+        pleos.stop()
+        if (_ui.value.mode == AppMode.PLEOS_CONTEXT && foreground) pleos.start()
+    }
+
     fun onBackground() {
         foreground = false
         pause()

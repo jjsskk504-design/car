@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- 읽기 권한만. CONTROL_* / PRIVATE_* 는 선언하지 않는다(제동·조향 등 차량 제어 금지). -->
-    <uses-permission android:name="pleos.car.permission.CAR_POWERTRAIN" />
-    <uses-permission android:name="pleos.car.permission.CAR_SPEED" />
+    <!--
+      읽기·안내용 권한만 선언한다. CONTROL_* (차량 제어)는 선언하지 않는다(제동·조향 등 차량 제어 금지).
+      실제 필요 권한은 Pleos_Connect_v2.1.0 에뮬레이터의 SecurityException 메시지로 확인 (SDK_COMPATIBILITY.md).
+    -->
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />
     <uses-permission android:name="pleos.car.permission.CAR_INFO" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- protectionLevel=dangerous → 런타임 동의 필요 (MainActivity 에서 요청) -->
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" />
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
 </manifest>
