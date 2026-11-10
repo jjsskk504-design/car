@@ -18,13 +18,13 @@
 visualization-engine/
 ├── build.gradle.kts / settings.gradle.kts   # Android Library 모듈(독립 빌드 가능), demo 앱 포함
 ├── model/       # 계약 모델(VehicleFrame v1, PredictionFrame, RiskFrame) + JSON 변환 + 원인 코드 문구
-├── rendering/   # 좌표 변환(Viewport), 차량 기하, 위험 스타일, SceneBuilder(표시 규칙), 프레임 보간 — Android 의존 없음
+├── rendering/   # 좌표 변환(Viewport), 차량 기하, 탑뷰 차량 도형(VehicleShapes), 위험 스타일, SceneBuilder(표시 규칙), 프레임 보간 — Android 의존 없음
 ├── overlays/    # Compose DrawScope 렌더러: RoadLayer, VehicleRenderer, RiskOverlay, TrajectoryOverlay
 ├── ui/          # 공개 Composable: RadarScreen, RadarSceneView, RadarStatusBar, RiskLegend, LevelIcon
 ├── replay/      # ReplaySession / ReplayJson / ReplayScreen / RiskTimeline
 ├── demo/        # 독립 실행 데모 앱 + Mock 시나리오 생성기 + 샘플 JSON(assets/scenarios)
 ├── tests/
-│   ├── unit/        # JVM 단위 테스트(32개, 데모 모듈 3개 별도)
+│   ├── unit/        # JVM 단위 테스트(37개, 데모 모듈 3개 별도)
 │   ├── android/     # 계측 테스트: Compose UI, 해상도, 생명주기, 렌더링 비용(12개)
 │   └── results/     # 테스트·FPS 측정 결과
 ├── docs/        # 스크린샷, 시연 영상, 예제 입력·출력
@@ -173,7 +173,9 @@ PRISM 저장소의 JSON Schema를 아직 받지 못해 **팀 공지의 필드 �
 | 경고 과장 금지 / 센서 누락 시 경고 억제 | 데이터 지연(기본 500ms), RiskFrame 시각 불일치(300ms), **위치를 모르는 차량**은 WATCH/WARNING이어도 UNKNOWN(판단 보류)으로 낮춤 |
 | 필요한 위험 객체만 강조 | 주행 모드에서는 위험 등급 상위 3대만 궤적·영역 표시, 위험 판단에 쓰인 후보 궤적만 그림. 화면 밖 위험 차량은 가장자리에 방향 + 거리만 표시 |
 | 상세 분석은 정차 후에만 | `ReplayScreen(isVehicleStopped = false)`이면 상세 화면 대신 안내 문구만 표시. 주행 모드에서는 차량 탭 비활성 |
-| 차선·차량 방향 표시 | 차선별 진행 방향 셰브런, 차량 앞쪽 삼각형, heading 회전 |
+| 차선·차량 방향 표시 | 차선별 진행 방향 셰브런, 탑뷰 자동차 그래픽(앞유리·보닛 방향), heading 회전 |
+| 차량 그래픽 | **승용차·SUV·대형 화물차** 탑뷰를 직접 만든 벡터 도형으로 그림(외부 이미지 없음). 자차 = 파란색, 다른 차량 = 회색. WATCH = 노란 외곽선, WARNING = 빨간 외곽선(+ 같은 색 테두리 띠), UNKNOWN = 반투명 차체 + 점선 외곽선 + ? 기호. 차종은 계약에 필드가 없어 `length_m`·`width_m`으로 추정(7 m 이상 화물차, 4.75 m 이상 또는 폭 1.95 m 이상 SUV) |
+| 위험 영역·예측 궤적 | 차량 그래픽 **위에** 반투명으로 겹쳐 그림. 아이콘·트래킹 ID는 가려지지 않도록 맨 위 |
 | 트래킹 ID 연결 | ID 기준 보간(리플레이), 상세 모드 ID 라벨, 사라진 ID를 끌고 다니지 않음 |
 
 ---
@@ -198,14 +200,20 @@ PRISM 저장소의 JSON Schema를 아직 받지 못해 **팀 공지의 필드 �
 
 | 구분 | 내용 | 결과 |
 |---|---|---|
-| JVM 단위(라이브러리 32 + 데모 3 = 35) | 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 통과 |
+| JVM 단위(라이브러리 37 + 데모 3 = 40) | 차량 도형·차종 분류, 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 통과 |
 | Compose UI 계측(12) | 픽셀 색으로 NORMAL→WATCH→WARNING→UNKNOWN 전환 검증, 데이터 누락 안내, 지연 시 경고 억제, 모드별 탭, 재생/일시정지, 원인 패널, 주행 중 잠금, **상태 복원(생명주기)**, 가로 해상도 5종, 렌더링 비용 | 12/12 통과 |
-| **합계** | | **47/47 통과** |
+| **합계** | | **52/52 통과** |
 
 **실제 화면 FPS**: 데모 release 빌드를 Pleos_Connect AVD(호스트 GPU, 60 Hz)에서 쟀습니다.
 - 조건: 상세 모드에서 모든 차량이 매 프레임 움직이고, 워밍업 구간은 뺀 중앙값입니다.
-- 결과: 10대 60 / 30대 59.5 / 50대 59.5 / 100대 57 / 200대 50.6 FPS
-- 측정 조건 전체와 에뮬레이터 상태에 따른 편차(이전 측정 51/48/35/30)는 RESULTS.md 3절에 있습니다.
+- 탑뷰 차량 그래픽(스프라이트 캐시) 적용 후, 이전 사각형 그래픽과 같은 조건에서 번갈아 측정한 중앙값입니다.
+
+  | 차량 수 | 10 | 50 | 100 | 200 |
+  |---|---|---|---|---|
+  | 이전 사각형 | 59.5 | 57.3 | 45.6 | 39.8 |
+  | 탑뷰 그래픽 | 60.0 | 59.5 | 56.8 | 45.9 |
+
+- 측정 조건 전체와 에뮬레이터 상태에 따른 편차는 RESULTS.md 3절에 있습니다.
 - 에뮬레이터 수치라 실차 SoC 성능을 보장하지 않습니다.
 
 ---

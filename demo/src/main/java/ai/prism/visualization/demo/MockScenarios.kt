@@ -37,15 +37,15 @@ object MockScenarios {
     // ------------------------------------------------------------------ 간단 시뮬레이터(월드 좌표)
 
     data class Cmd(val at: Float, val accel: Float? = null, val minSpeed: Float? = null, val lane: Int? = null, val visible: Boolean? = null)
-    data class Spec(val id: String, val truck: Boolean, val y0: Float, val lane: Int, val v0: Float, val cmds: List<Cmd> = emptyList())
+    data class Spec(val id: String, val truck: Boolean, val y0: Float, val lane: Int, val v0: Float, val cmds: List<Cmd> = emptyList(), val suv: Boolean = false)
 
     /** 월드 좌표: X = 오른쪽(자차 차선 중심 0), Y = 전방. */
     data class WorldState(
-        val id: String, val truck: Boolean, val X: Float, val Y: Float, val vX: Float, val vY: Float, val aY: Float,
+        val id: String, val truck: Boolean, val suv: Boolean, val X: Float, val Y: Float, val vX: Float, val vY: Float, val aY: Float,
         val lane: Int, val targetLane: Int, val visible: Boolean,
     ) {
-        val length get() = if (truck) 12f else 4.6f
-        val width get() = if (truck) 2.5f else 1.9f
+        val length get() = if (truck) 12f else if (suv) 4.9f else 4.6f
+        val width get() = if (truck) 2.5f else if (suv) 2.0f else 1.9f
     }
 
     private fun laneX(lane: Int) = (lane - ROAD.egoLaneIndex) * LANE_W
@@ -71,7 +71,7 @@ object MockScenarios {
                 val effA = if (ag.a < 0 && ag.v <= ag.minV + 1e-3f) 0f else ag.a
                 val dX = laneX(ag.target) - ag.X
                 val vX = if (abs(dX) < 1e-3f) 0f else sign(dX) * min(LAT_SPEED, abs(dX) / dt)
-                WorldState(ag.s.id, ag.s.truck, ag.X, ag.Y, vX, ag.v, effA,
+                WorldState(ag.s.id, ag.s.truck, ag.s.suv, ag.X, ag.Y, vX, ag.v, effA,
                     ((ag.X / LANE_W) + ROAD.egoLaneIndex).roundToInt(), ag.target, ag.visible)
                     .also {
                         val v1 = (ag.v + effA * dt).let { nv -> if (effA < 0 && nv < ag.minV) ag.minV else nv }
@@ -203,9 +203,9 @@ object MockScenarios {
             Spec("ego", false, 0f, 1, 27f),
             Spec("L1", false, -10f, 0, 27.5f),
             Spec("F1", false, 42f, 1, 27f),
-            Spec("R1", false, 15f, 2, 26.5f),
+            Spec("R1", false, 15f, 2, 26.5f, suv = true),
             Spec("T1", true, 60f, 2, 25f, listOf(Cmd(3f, accel = -0.5f, minSpeed = 24f))),
-            Spec("B1", false, -30f, 1, 27f),
+            Spec("B1", false, -30f, 1, 27f, suv = true),
         ), 8f,
     ) { _, _, _ -> null }
 
@@ -213,9 +213,9 @@ object MockScenarios {
         "front_brake", "전방 급감속", "앞 차량이 급감속하면 앞 차량과 내 뒤 차량의 위험이 차례로 변합니다.",
         listOf(
             Spec("ego", false, 0f, 1, 27f, listOf(Cmd(2.5f, accel = -5f, minSpeed = 8f))),
-            Spec("F1", false, 35f, 1, 27f, listOf(Cmd(1.5f, accel = -6f, minSpeed = 8f))),
+            Spec("F1", false, 35f, 1, 27f, listOf(Cmd(1.5f, accel = -6f, minSpeed = 8f)), suv = true),
             Spec("B1", false, -22f, 1, 27f, listOf(Cmd(3.1f, accel = -5f, minSpeed = 8f))),
-            Spec("L1", false, 5f, 0, 26f),
+            Spec("L1", false, 5f, 0, 26f, suv = true),
             Spec("R1", false, -12f, 2, 26f),
         ), 9f,
     ) { c, w, _ ->
@@ -258,7 +258,7 @@ object MockScenarios {
         "lane_change", "차선 변경", "우측 차량이 내 차로로 들어옵니다. 진입이 예상되는 순간부터 해당 차량만 강조됩니다.",
         listOf(
             Spec("ego", false, 0f, 1, 26f),
-            Spec("R1", false, 10f, 2, 27.5f, listOf(Cmd(2f, lane = 1))),
+            Spec("R1", false, 10f, 2, 27.5f, listOf(Cmd(2f, lane = 1)), suv = true),
             Spec("F1", false, 60f, 1, 26f),
             Spec("L1", false, -6f, 0, 26.5f),
             Spec("R2", false, -25f, 2, 26f),
@@ -272,8 +272,8 @@ object MockScenarios {
             Spec("ego", false, 0f, 1, 27f, listOf(Cmd(4.6f, accel = -4f, minSpeed = 15f))),
             Spec("T1", true, 80f, 2, 23f, listOf(Cmd(1f, accel = -4.5f, minSpeed = 9f))),
             Spec("R1", false, 24f, 2, 26f, listOf(Cmd(3f, lane = 1, accel = -2.5f, minSpeed = 18f))),
-            Spec("F1", false, 55f, 1, 27f),
-            Spec("L1", false, -8f, 0, 28f),
+            Spec("F1", false, 55f, 1, 27f, suv = true),
+            Spec("L1", false, -8f, 0, 28f, suv = true),
             Spec("B1", false, -20f, 1, 27f, listOf(Cmd(5.6f, accel = -4f, minSpeed = 15f))),
         ), 9f,
         extraCandidates = { c, w ->
@@ -311,7 +311,7 @@ object MockScenarios {
                 Spec("ego", false, 0f, 1, 26f),
                 Spec("R1", false, 10f, 2, 27.5f, listOf(Cmd(2f, lane = 1), Cmd(2.4f, visible = false), Cmd(3.6f, visible = true))),
                 Spec("F1", false, 60f, 1, 26f),
-                Spec("L1", false, -6f, 0, 26.5f),
+                Spec("L1", false, -6f, 0, 26.5f, suv = true),
             ), 8f,
             extraCandidates = { c, w -> if (w.id == "R1" && w.lane == 2) listOf(lcCandidate(c, w) to true) else emptyList() },
         ) { c, w, _ ->

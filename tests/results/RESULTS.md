@@ -7,15 +7,15 @@
 
 | 구분 | 테스트 수 | 성공 | 실패 |
 |---|---|---|---|
-| JVM 단위 — 라이브러리 (`tests/unit`) | 32 | 32 | 0 |
+| JVM 단위 — 라이브러리 (`tests/unit`) | 37 | 37 | 0 |
 | JVM 단위 — 데모 (`demo/src/test`) | 3 | 3 | 0 |
 | 계측(에뮬레이터) — Compose UI·해상도·성능 (`tests/android`) | 12 | 12 | 0 |
-| **합계** | **47** | **47** | **0** |
+| **합계** | **52** | **52** | **0** |
 
 실행 명령:
 
 ```bash
-./gradlew :testDebugUnitTest :demo:testDebugUnitTest   # 35개
+./gradlew :testDebugUnitTest :demo:testDebugUnitTest   # 40개
 ./gradlew :connectedDebugAndroidTest                    # 12개, 에뮬레이터 필요
 ```
 
@@ -25,14 +25,14 @@
 |---|---|
 | 호스트 | Windows 11 Home, JDK 17.0.20.1 |
 | 빌드 | Gradle 9.6.0, AGP 9.5.1, Kotlin 2.2.10, Compose BOM 2026.02.01, compileSdk 37, minSdk 24 |
-| 에뮬레이터 | AVD `Pleos_Connect_v2.1.0`, Android 14 (API 34), x86_64, 창 없이 실행(`-no-window`) |
+| 에뮬레이터 | AVD `Pleos_Connect_v2.1.0`, Android 14 (API 34), x86_64. 3.1~3.3절은 창 없이(`-no-window`), 3.4절과 최종 계측 테스트는 창 모드로 실행 |
 | 화면 | 2560×1440, 160 dpi, 60 Hz. 앱은 Pleos 앱 영역 1682×1210(멀티 윈도)에 표시, 사용자 10 |
 | GPU | 호스트 GPU(`-gpu host`, Intel Graphics). SwiftShader로는 측정하지 않음 |
 | 가상 CPU / RAM | 4 vCPU / 4 GB. Pleos 시스템 앱(drivingview, 지도 등)이 함께 실행됨 |
 
-## 2. 테스트별 결과 (47개, 모두 통과)
+## 2. 테스트별 결과 (52개, 모두 통과)
 
-### JVM — 라이브러리 (32)
+### JVM — 라이브러리 (37)
 
 | 스위트 | 테스트 | 검증 내용 |
 |---|---|---|
@@ -67,6 +67,11 @@
 | | sensorDropout_unknownAndWarningSuppressed | 누락 구간은 UNKNOWN, Mock이 WATCH를 보내도 낮춤 |
 | | replayEvents_explainCauses | 리플레이 이벤트의 원인·원인 차량 |
 | | replayIndexAndInterpolation | 시간 → 프레임 인덱스, 보간 |
+| VehicleShapesTest | classifyByDimensions | 치수 → 승용차·SUV·대형 화물차 분류 |
+| | shapesStayInsideVehicleFootprint_soPositionAndSizeArePreserved | 모든 도형 점이 차량 길이·폭 안(미러만 폭 0.62까지), 차체가 길이·폭 전체 사용 → 크기·위치 유지 |
+| | shapesAreLeftRightSymmetric | 좌우 대칭(곡선 제어점 포함) |
+| | shapesDifferPerType | 차종별 도형이 서로 다름 |
+| | sceneBuilderAssignsBodyType | Scene 차량에 차종이 지정됨 |
 | ExampleIoTest | writeExamples | `docs/examples/` 예제 입력·출력 생성 |
 
 ### JVM — 데모 (3)
@@ -81,7 +86,7 @@
 
 | 스위트 | 테스트 | 검증 내용 |
 |---|---|---|
-| RadarScreenUiTest | riskColorTransitions_NORMAL_WATCH_WARNING_UNKNOWN | **화면 픽셀 색**과 상태 줄 텍스트가 등급에 따라 바뀜 |
+| RadarScreenUiTest | riskColorTransitions_NORMAL_WATCH_WARNING_UNKNOWN | **화면 픽셀**: 차체(보닛)는 회색 유지, 차체 외곽선이 WATCH 노란색 / WARNING 빨간색, UNKNOWN은 중립색. 상태 줄 텍스트 전환 |
 | | missingVehicleData_showsNotice | "차량 데이터 없음" 안내 |
 | | staleData_suppressesWarning | 지연 시 "판단 보류", 경고 문구 없음 |
 | | riskFrameMissing_allNeutral | RiskFrame 없음 → 회색 픽셀 |
@@ -131,13 +136,36 @@
 
 | 차량 수 | 평균 ms | p95 ms |
 |---|---|---|
-| 5 | 9.66 | 17.92 |
-| 20 | 24.02 | 36.86 |
-| 50 | 30.22 | 39.58 |
-| 100 | 48.97 | 62.87 |
-| 200 | 101.47 | 196.97 |
+| 5 | 10.83 | 17.75 |
+| 20 | 22.24 | 34.64 |
+| 50 | 33.53 | 45.84 |
+| 100 | 56.63 | 78.20 |
+| 200 | 90.50 | 122.91 |
 
+탑뷰 차량 그래픽을 적용한 최종 코드의 값입니다(창 모드 에뮬레이터).
 GPU 합성이 아니라 CPU로 그린 비용이고, ART 최적화가 꺼진 상태입니다. 실제 FPS와 비교하는 값이 아니라 **회귀 감지용**입니다(기준: 50대 평균 50ms 이하).
+
+### 3.4 탑뷰 차량 그래픽 — 이전 사각형 그래픽과 성능 비교
+
+같은 에뮬레이터(창 모드, `-gpu host`, 60 Hz)에서 이전 버전과 새 버전을 번갈아 측정했습니다.
+- 이전 버전: 최초 커밋 `2c45c52`, 사각형 그래픽. `git archive`로 꺼내 빌드했습니다.
+- 측정 조건은 3.1절과 같습니다(release, stress 모드, 2초 구간, 첫 구간 제외).
+- 원시 데이터는 `vehicle_graphics_perf_raw.csv`에 있습니다.
+
+| 구현 단계 | 10대 | 50대 | 100대 | 200대 |
+|---|---|---|---|---|
+| 1차: 차량마다 매 프레임 Path 12개 생성 | 58.3 (이전 58.8) | **35.2** (56.8) | **31.2** (50.4) | **17.7** (34.8) |
+| 2차: 차종별 Path 캐시 + 행렬 변환 | 58.3 (59.3) | 51.1 (56.1) | 44.6 (48.2) | 32.2 (38.3) |
+| 3차: 같은 색 부품 합치기 + LOD | 59.0 (59.3) | 51.6 (56.0) | 45.6 (50.4) | 34.4 (39.2) |
+| **최종: 스프라이트 캐시** | **60.0** (59.5) | **59.5** (57.3) | **56.8** (45.6) | **45.9** (39.8) |
+
+(괄호 = 같은 라운드의 이전 사각형 그래픽. 2차 이후는 2라운드 측정값 8개의 중앙값)
+
+최종 구현:
+- 차종·색·화면 크기별 차량 그림을 **한 번만** 비트맵으로 래스터화합니다(직접 만든 벡터 도형, 외부 이미지 아님).
+- 차량마다 affine 행렬(위치·heading·축척) 하나와 그리기 호출 1회로 그립니다.
+- 외곽선·테두리 띠는 위험 차량과 자차에만 화면 좌표 Path로 그립니다(선 두께 일정).
+- 비교 결과 모든 차량 수에서 이전 사각형 그래픽보다 같거나 빠릅니다. CPU 렌더링 비용(3.3절)은 이전과 오차 범위 안에서 같습니다(50대 평균: 이전 33.6~38.0ms, 새 32.6~32.9ms).
 
 ## 4. 개발 중 발견한 실패와 조치
 
@@ -152,6 +180,8 @@ GPU 합성이 아니라 CPU로 그린 비용이고, ART 최적화가 꺼진 상�
 | 첫 화면까지 약 29초, 프레임당 0.5~1초 | 메인 스레드에서 JSON 1.5MB 파싱 + 에뮬레이터 SwiftShader | IO 스레드 지연 로딩 + `-gpu host` |
 | 계측 실행 중 에뮬레이터 무응답 | 에뮬레이터 자체 정지(adb `dumpsys`도 시간 초과) | 재시작 후 전체 재실행 → 12/12 통과 |
 | 루트 빌드에 넣으면 데모가 잘못된 프로젝트를 참조 (최종 점검에서 발견) | `project(":")`가 PRISM 루트를 가리킴 | `project(project.parent!!.path)`로 수정. 가짜 PRISM 루트 빌드에서 확인 |
+| 탑뷰 그래픽 1차 구현에서 50대 이상 FPS 38~49% 하락 | 차량마다 매 프레임 Path 12개 생성·그리기 | Path 캐시 → 패스 병합 → 스프라이트 캐시 순으로 최적화(3.4절). 최종은 이전보다 같거나 빠름 |
+| 차량 도형 대칭 테스트 실패 | 테스트가 곡선 끝점을 비교에서 빠뜨림(도형 문제 아님) | 곡선 끝점·제어점까지 비교하도록 테스트 수정 |
 
 ## 5. 측정·검증하지 않은 것
 

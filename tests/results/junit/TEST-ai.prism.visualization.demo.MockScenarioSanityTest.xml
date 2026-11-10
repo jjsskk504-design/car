@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.demo.MockScenarioSanityTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-10T12:00:51.173Z" hostname="강재석" time="0.147">
+<testsuite name="ai.prism.visualization.demo.MockScenarioSanityTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-11-10T13:06:51.664Z" hostname="강재석" time="0.255">
   <properties/>
-  <testcase name="noVehicleOverlapsInAnyScenario" classname="ai.prism.visualization.demo.MockScenarioSanityTest" time="0.141"/>
+  <testcase name="noVehicleOverlapsInAnyScenario" classname="ai.prism.visualization.demo.MockScenarioSanityTest" time="0.249"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

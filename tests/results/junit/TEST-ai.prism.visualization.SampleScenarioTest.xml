@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.SampleScenarioTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-10T12:27:35.817Z" hostname="강재석" time="0.676">
+<testsuite name="ai.prism.visualization.SampleScenarioTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-10T13:06:48.021Z" hostname="강재석" time="0.509">
   <properties/>
-  <testcase name="laneChange_onlyIntrudingVehicleHighlighted_withLaneChangePath" classname="ai.prism.visualization.SampleScenarioTest" time="0.097"/>
-  <testcase name="normal_everyVehicleNeutral" classname="ai.prism.visualization.SampleScenarioTest" time="0.036"/>
-  <testcase name="allScenariosParse_andCoordinatesAreEgoRelative" classname="ai.prism.visualization.SampleScenarioTest" time="0.264"/>
-  <testcase name="chain_truckIsSource_andRelationsFormChain" classname="ai.prism.visualization.SampleScenarioTest" time="0.1"/>
-  <testcase name="sensorDropout_unknownAndWarningSuppressed" classname="ai.prism.visualization.SampleScenarioTest" time="0.021"/>
-  <testcase name="frontBrake_leadThenFollowerChange" classname="ai.prism.visualization.SampleScenarioTest" time="0.072"/>
-  <testcase name="replayEvents_explainCauses" classname="ai.prism.visualization.SampleScenarioTest" time="0.03"/>
-  <testcase name="replayIndexAndInterpolation" classname="ai.prism.visualization.SampleScenarioTest" time="0.054"/>
+  <testcase name="laneChange_onlyIntrudingVehicleHighlighted_withLaneChangePath" classname="ai.prism.visualization.SampleScenarioTest" time="0.089"/>
+  <testcase name="normal_everyVehicleNeutral" classname="ai.prism.visualization.SampleScenarioTest" time="0.035"/>
+  <testcase name="allScenariosParse_andCoordinatesAreEgoRelative" classname="ai.prism.visualization.SampleScenarioTest" time="0.197"/>
+  <testcase name="chain_truckIsSource_andRelationsFormChain" classname="ai.prism.visualization.SampleScenarioTest" time="0.08"/>
+  <testcase name="sensorDropout_unknownAndWarningSuppressed" classname="ai.prism.visualization.SampleScenarioTest" time="0.017"/>
+  <testcase name="frontBrake_leadThenFollowerChange" classname="ai.prism.visualization.SampleScenarioTest" time="0.029"/>
+  <testcase name="replayEvents_explainCauses" classname="ai.prism.visualization.SampleScenarioTest" time="0.034"/>
+  <testcase name="replayIndexAndInterpolation" classname="ai.prism.visualization.SampleScenarioTest" time="0.026"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

@@ -42,8 +42,8 @@
       "heading_rad": 1.5708,
       "lane_id": 2,
       "id": "F1",
-      "width_m": 1.9,
-      "length_m": 4.6
+      "width_m": 2,
+      "length_m": 4.9
     },
     {
       "vx": 0,
@@ -53,8 +53,8 @@
       "heading_rad": 1.5708,
       "lane_id": 1,
       "id": "L1",
-      "width_m": 1.9,
-      "length_m": 4.6
+      "width_m": 2,
+      "length_m": 4.9
     },
     {
       "vx": 0,

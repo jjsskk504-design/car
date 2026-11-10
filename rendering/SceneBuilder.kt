@@ -26,6 +26,8 @@ data class SceneVehicle(
     val headingRad: Float,
     val lengthM: Float,
     val widthM: Float,
+    /** 탑뷰 그래픽 종류(치수로 추정). */
+    val bodyType: VehicleBodyType,
     /** 실제 치수 기준 꼭짓점(화면 표시는 VehicleRenderer 가 폭을 보정해 다시 계산). */
     val corners: List<Point2>,
     val nose: List<Point2>,
@@ -166,6 +168,7 @@ object SceneBuilder {
                 id = v.id, isEgo = isEgo,
                 center = Point2(v.x, v.y), headingRad = v.headingRad,
                 lengthM = v.lengthM, widthM = v.widthM,
+                bodyType = VehicleBodyType.classify(v.lengthM, v.widthM),
                 corners = VehicleGeometry.corners(v.x, v.y, v.headingRad, v.lengthM, v.widthM),
                 nose = VehicleGeometry.nose(v.x, v.y, v.headingRad, v.lengthM, v.widthM),
                 level = lv, reportedLevel = r?.level, laneId = v.laneId,
@@ -242,7 +245,7 @@ object SceneBuilder {
     private fun defaultEgo(id: String = "ego"): SceneVehicle {
         val h = (Math.PI / 2).toFloat()
         return SceneVehicle(
-            id, true, Point2(0f, 0f), h, 4.6f, 1.9f,
+            id, true, Point2(0f, 0f), h, 4.6f, 1.9f, VehicleBodyType.SEDAN,
             VehicleGeometry.corners(0f, 0f, h, 4.6f, 1.9f), VehicleGeometry.nose(0f, 0f, h, 4.6f, 1.9f),
             DisplayLevel.EGO, null, null, null, emptyList(), false,
         )
