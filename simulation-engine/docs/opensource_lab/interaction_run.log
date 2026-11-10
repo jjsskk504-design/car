@@ -1,0 +1,52 @@
+== check_imports
+Trying to import csv (for loading track files).
+ok
+
+Trying to import lanelet2 (for loading maps).
+Could not import lanelet2. It must be built and sourced, see https://github.com/fzi-forschungszentrum-informatik/Lanelet2 for details.For visualization, the fallback is utils.map_vis_without_lanelet.py.
+
+Trying to import xml (for loading maps without lanelet2).
+ok
+
+Trying to import pyproj (for loading maps without lanelet2).
+ok
+
+Trying to import argparse (argument parsing for loading and visualizing tracks).
+ok
+
+Trying to import os (check file existence for loading and visualizing tracks).
+ok
+
+Trying to import sys.
+ok
+
+Trying to import time (for scenario playback).
+ok
+
+Trying to import math (for visualizing tracks).
+ok
+
+Trying to import matplotlib (for visualizing tracks).
+ok
+
+Trying to import numpy (for visualizing tracks).
+ok
+== unittest
+Ran 1 test in 0.000s
+
+FAILED (errors=1)
+== main_load_track_file
+Found 2 object tracks.
+Track with id 1 lasts from ts 100 to ts 10000, so 9.9 seconds.
+Its initial motion state is MotionState: {'time_stamp_ms': 100, 'x': 1.0, 'y': 2.5, 'vx': 10.0, 'vy': 0.0, 'psi_rad': 0.0}
+== main_visualize_data (headless, 20s 제한)
+  File "<opensource-lab>\interaction-dataset\python\main_visualize_data.py", line 154, in <module>
+    fig.canvas.set_window_title("Interaction Dataset Visualization")
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'FigureCanvasAgg' object has no attribute 'set_window_title'
+exit=0
+
+== unittest (저장소 루트에서 재실행)
+Ran 1 test ... OK
+== main_visualize_data via interaction_vis_shim.py
+Loading map... Loading tracks... Plotting... -> interaction_test_scenario.png 저장

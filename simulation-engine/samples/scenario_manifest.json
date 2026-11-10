@@ -1,0 +1,347 @@
+{
+  "schema_version": "1.0",
+  "scenarios": [
+    {
+      "scenario": "chain_reaction",
+      "file": "chain_reaction.jsonl",
+      "ego_pose_file": "chain_reaction.ego_pose.jsonl",
+      "description": "선두 화물차 급감속 -> 앞차 감속·회피 차선변경 -> 자차·후속차 연쇄 감속",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 106,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "truck_01",
+        "car_11",
+        "car_12",
+        "car_01",
+        "car_02"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 4000,
+          "type": "set_target_speed",
+          "vehicle_id": "truck_01",
+          "value": 3,
+          "intentional": true,
+          "origin": "forced",
+          "note": "선두 화물차 급감속"
+        },
+        {
+          "t_ms": 5000,
+          "type": "change_lane",
+          "vehicle_id": "car_11",
+          "value": 2,
+          "intentional": true,
+          "origin": "forced",
+          "note": "앞차 L2 -> L3 회피"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "lane_change",
+      "file": "lane_change.jsonl",
+      "ego_pose_file": "lane_change.ego_pose.jsonl",
+      "description": "왼쪽 차선에서 추월한 차량이 자차 전방으로 근접 끼어들기",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 105,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "car_08",
+        "car_01",
+        "car_03",
+        "car_04",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 5500,
+          "type": "change_lane",
+          "vehicle_id": "car_08",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "L1 -> L2 끼어들기"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "merge",
+      "file": "merge.jsonl",
+      "ego_pose_file": "merge.ego_pose.jsonl",
+      "description": "오른쪽 차선 저속 차량이 가속하며 자차 차선 전방으로 합류 (직선 3차선에서의 근사)",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 104,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "car_07",
+        "car_02",
+        "car_03",
+        "car_04",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 2000,
+          "type": "set_target_speed",
+          "vehicle_id": "car_07",
+          "value": 24,
+          "intentional": true,
+          "origin": "forced",
+          "note": "합류 차량 가속"
+        },
+        {
+          "t_ms": 3000,
+          "type": "change_lane",
+          "vehicle_id": "car_07",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "L3 -> L2 합류"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "normal",
+      "file": "normal.jsonl",
+      "ego_pose_file": "normal.ego_pose.jsonl",
+      "description": "3차선 정속 주행, 주변 5대, 위협 이벤트 없음",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 101,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "car_01",
+        "car_02",
+        "car_03",
+        "car_04",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "rear_approach",
+      "file": "rear_approach.jsonl",
+      "ego_pose_file": "rear_approach.ego_pose.jsonl",
+      "description": "같은 차선 후방 35m 차량이 35 m/s로 급접근",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 103,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "car_06",
+        "car_01",
+        "car_02",
+        "car_03",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 0,
+          "type": "set_target_speed",
+          "vehicle_id": "car_06",
+          "value": 35,
+          "intentional": true,
+          "origin": "forced",
+          "note": "후방 차량 급접근 (초기부터)"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "sensor_dropout",
+      "file": "sensor_dropout.jsonl",
+      "ego_pose_file": "sensor_dropout.ego_pose.jsonl",
+      "description": "normal과 같은 교통에 센서 누락(의도적)과 위치 노이즈를 주입",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 107,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "car_01",
+        "car_02",
+        "car_03",
+        "car_04",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 3000,
+          "t_end_ms": 5000,
+          "type": "sensor_dropout",
+          "vehicle_id": "car_01",
+          "intentional": true,
+          "origin": "forced",
+          "note": "2초 관측 누락"
+        },
+        {
+          "t_ms": 7000,
+          "t_end_ms": 7500,
+          "type": "sensor_dropout",
+          "vehicle_id": "car_03",
+          "intentional": true,
+          "origin": "forced",
+          "note": "0.5초 관측 누락"
+        },
+        {
+          "t_ms": 2000,
+          "t_end_ms": 10000,
+          "type": "sensor_noise",
+          "vehicle_id": "car_05",
+          "value": 0.3,
+          "intentional": true,
+          "origin": "forced",
+          "note": "위치 노이즈 표준편차 0.3m"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "sudden_braking",
+      "file": "sudden_braking.jsonl",
+      "ego_pose_file": "sudden_braking.ego_pose.jsonl",
+      "description": "같은 차선 전방 30m 화물차가 t=4s에 25->5 m/s 급감속 (최대 -6 m/s^2)",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 102,
+      "ego_id": "ego",
+      "vehicle_count": 6,
+      "vehicle_ids": [
+        "ego",
+        "truck_01",
+        "car_01",
+        "car_02",
+        "car_04",
+        "car_05"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 4000,
+          "type": "set_target_speed",
+          "vehicle_id": "truck_01",
+          "value": 5,
+          "intentional": true,
+          "origin": "forced",
+          "note": "전방 화물차 급감속"
+        }
+      ],
+      "observed_collisions": [],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.1.0",
+        "simulator": "highway-env 1.12.1 (MIT)",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    }
+  ]
+}

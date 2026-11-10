@@ -1,0 +1,15 @@
+name: rear_approach
+description: 같은 차선 후방 35m 차량이 35 m/s로 급접근
+seed: 103
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: car_06, lane: 1, x: 165, speed: 35}
+  - {id: car_01, lane: 2, x: 220, speed: 24}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+  - {id: car_03, lane: 1, x: 260, speed: 25}
+  - {id: car_05, lane: 0, x: 260, speed: 23}
+events:
+  - {t_s: 0, type: set_target_speed, vehicle: car_06, value: 35, note: 후방 차량 급접근 (초기부터)}

@@ -1,0 +1,14 @@
+name: normal
+description: 3차선 정속 주행, 주변 5대, 위협 이벤트 없음
+seed: 101
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: car_01, lane: 2, x: 220, speed: 24}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+  - {id: car_03, lane: 1, x: 245, speed: 25}
+  - {id: car_04, lane: 2, x: 170, speed: 25}
+  - {id: car_05, lane: 0, x: 260, speed: 23}
+events: []

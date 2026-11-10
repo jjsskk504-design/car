@@ -1,0 +1,16 @@
+name: merge
+description: 오른쪽 차선 저속 차량이 가속하며 자차 차선 전방으로 합류 (직선 3차선에서의 근사)
+seed: 104
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 25}
+vehicles:
+  - {id: car_07, lane: 2, x: 240, speed: 18}
+  - {id: car_02, lane: 0, x: 185, speed: 27}
+  - {id: car_03, lane: 1, x: 270, speed: 25}
+  - {id: car_04, lane: 2, x: 170, speed: 25}
+  - {id: car_05, lane: 0, x: 260, speed: 23}
+events:
+  - {t_s: 2, type: set_target_speed, vehicle: car_07, value: 24, note: 합류 차량 가속}
+  - {t_s: 3, type: change_lane, vehicle: car_07, value: 1, note: L3 -> L2 합류}
