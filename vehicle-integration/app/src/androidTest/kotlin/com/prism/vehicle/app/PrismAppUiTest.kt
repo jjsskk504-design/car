@@ -6,6 +6,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.lifecycle.ViewModelProvider
@@ -25,6 +28,7 @@ class PrismAppUiTest {
 
     private fun open(id: String) {
         rule.waitUntil(5_000) { vm.ui.value.scenarioIds.isNotEmpty() }
+        rule.onNodeWithTag("scenario_list").performScrollToNode(hasTestTag("scenario_$id"))
         rule.onNodeWithTag("scenario_$id").performClick()
         rule.waitUntil(5_000) { vm.ui.value.screen != Screen.SELECT }
     }
@@ -33,6 +37,7 @@ class PrismAppUiTest {
         rule.waitUntil(5_000) { vm.ui.value.scenarioIds.isNotEmpty() }
         rule.waitUntil(10_000) { runCatching { rule.onNodeWithTag("scenario_normal").fetchSemanticsNode() }.isSuccess } // 첫 실행 시 창이 늦게 붙음
         listOf("normal", "rear_approach", "sudden_brake", "lane_change", "chain_reaction", "dropout").forEach {
+            rule.onNodeWithTag("scenario_list").performScrollToNode(hasTestTag("scenario_$it")) // 좁은 창에서는 화면 밖 항목이 아직 그려지지 않음
             rule.onNodeWithTag("scenario_$it").assertExists()
         }
         rule.onNodeWithText("시뮬레이션 결과 재생 · 실시간 감지 아님").assertExists()
@@ -43,11 +48,14 @@ class PrismAppUiTest {
         rule.onNodeWithText("MOCK 데이터").assertExists()
         rule.onNodeWithTag("play").performSemanticsAction(SemanticsActions.OnClick) // 차량 홈 TaskView 에서 좌표 터치 주입이 막히는 경우가 있어 semantics 클릭 사용
         rule.waitUntil(5_000) { vm.ui.value.clock.positionMs > 1_000 }
-        rule.onNodeWithTag("pause").performSemanticsAction(SemanticsActions.OnClick)
+        // 재생 중에는 매 프레임 재구성이라 Compose 테스트가 'idle' 을 기다리면 재생이 끝나 버린다 → 일시정지는 UI 스레드에서 바로 호출
+        rule.runOnUiThread { vm.pause() }
         val paused = vm.ui.value.clock.positionMs
+        assertTrue("재생이 끝나기 전에 멈춰야 함: $paused", paused < 10_000)
         Thread.sleep(500)
         rule.waitForIdle()
         assertEquals(paused, vm.ui.value.clock.positionMs)
+        rule.onNodeWithTag("play").assertExists() // 버튼이 '재생' 으로 돌아옴
     }
 
     @Test fun riskLevelChangesDuringPlayback() {
@@ -60,10 +68,10 @@ class PrismAppUiTest {
     @Test fun replayOnlyAfterParking() {
         open("sudden_brake")
         rule.onNodeWithTag("open_replay").assertIsNotEnabled()
-        rule.onNodeWithTag("parked").performClick()
-        rule.onNodeWithTag("open_replay").assertIsEnabled().performClick()
+        rule.onNodeWithTag("parked").performScrollTo().performClick()
+        rule.onNodeWithTag("open_replay").performScrollTo().assertIsEnabled().performClick()
         rule.waitUntil(3_000) { vm.ui.value.screen == Screen.REPLAY }
-        rule.onNodeWithTag("speed_2.0").performClick()
+        rule.onNodeWithTag("speed_2.0").performScrollTo().performClick()
         rule.waitForIdle()
         assertEquals(2f, vm.ui.value.clock.speed)
         rule.onNodeWithTag("seek").assertExists()

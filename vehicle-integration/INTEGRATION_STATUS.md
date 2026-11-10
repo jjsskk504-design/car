@@ -6,9 +6,10 @@
 
 | 항목 | 결과 |
 |---|---|
-| `gradlew test` (JVM 단위·통합) | **PASS** 34/34 |
+| `gradlew test` (JVM 단위·통합) | **PASS** 35/35 |
+| Compose UI 테스트 (`connectedDebugAndroidTest`, 7개) | 휴대폰 AVD `Medium_Phone_API_36.0` (Android 16): **PASS 7/7**. Pleos 에뮬레이터: 아래 4절 |
 | `gradlew assembleDebug` | **성공** |
-| Debug APK | `app/build/outputs/apk/debug/app-debug.apk` (약 47MB, sha256 `db190ecb0c3716b4…7d26`) |
+| Debug APK | `app/build/outputs/apk/debug/app-debug.apk` (약 47MB) |
 | 에뮬레이터 설치 | **성공** (`adb install -r`, Pleos_Connect_v2.1.0) |
 | 에뮬레이터 실행·화면 동작 | **성공** — 스크린샷 `tests/reports/screenshots/` |
 | Release APK | **미생성**. 서명 키를 저장소에 두지 않으므로 서명 없는 release 는 설치 불가. 제출·시연은 Debug APK 사용, Release 는 팀장이 서명 키로 별도 빌드 |
@@ -18,6 +19,7 @@
 ## 2. 실제 실행한 Android 환경
 
 - AVD `Pleos_Connect_v2.1.0` — Android 14 (API 34), `pleos_car_emulator` x86_64, 2560×1440, user 10
+- AVD `Medium_Phone_API_36.0` — Android 16, 1080×2400 세로 (Simulation Mode UI 테스트·좁은 화면 레이아웃 확인용)
 - 실차: 미실행
 
 ## 3. 기능별 상태
@@ -30,7 +32,9 @@
 | 시뮬레이션 재생 | TESTED | `03_drive_chain_reaction_watch.png` (5.2s, WATCH) |
 | 위험도 표시 | TESTED | NORMAL 회색 / WATCH 노랑 / WARNING 빨강 / UNKNOWN 점선+`?`, 텍스트 라벨 병기 |
 | 정차 후 리플레이 (seek, 0.5·1·2배) | TESTED | `04_replay_seek_5_5s.png`, `ReplayClockTest`. 정차 전에는 버튼 비활성 확인 |
-| 오류 상태 표시 | TESTED (로직) / IMPLEMENTED (화면) | `FixtureErrorHandlingTest` 11개. 오류 화면은 에뮬레이터에서 직접 띄워 보지 않음 |
+| 오류 상태 표시 | TESTED | `FixtureErrorHandlingTest` 12개 + UI 테스트 `unknownScenarioShowsErrorScreen` |
+| 좁은 화면(분할·휴대폰) 레이아웃 | TESTED | 폭이 부족하면 위아래 배치. `05_phone_portrait_select.png` |
+| 단일 JSON 결과 파일 | TESTED | `singleJsonFilesAreAccepted` |
 | Simulation Mode | TESTED | SDK 미호출 확인 (상태 UNTESTED 유지) |
 | Pleos Context Mode | TESTED (에뮬레이터) | 기어·위치·내비·TTS CONFIRMED (`SDK_COMPATIBILITY.md`) |
 | ADAS Mode | 비활성 (설계대로) | 공개 SDK 없음 |
@@ -55,7 +59,26 @@
 | SDK 연결 실패 처리 | 권한 없는 상태에서 4개 SDK `SecurityException` → FAILED 표시, 앱 crash 없음 | PASS (수동) |
 | 라이프사이클 리소스 해제 | onStop → `stop()` 로그 | PASS (수동) |
 
-FAIL: 없음. SKIP: 자동화된 Compose UI 계측 테스트(androidTest)는 작성하지 않음 — 수동 확인으로 대체.
+FAIL: 없음 (JVM). UI 테스트 결과는 아래.
+
+### Compose UI 테스트 (`app/src/androidTest/.../PrismAppUiTest.kt`)
+
+| 테스트 | 휴대폰 AVD (Android 16) |
+|---|---|
+| listsAllScenarios | PASS |
+| playAdvancesTimeAndPauses | PASS |
+| riskLevelChangesDuringPlayback | PASS |
+| replayOnlyAfterParking | PASS |
+| dropoutShowsMissingData | PASS |
+| unknownScenarioShowsErrorScreen | PASS |
+| adasModeIsDisabled | PASS |
+
+Pleos 에뮬레이터 (`am instrument --user 10`, 콜드 부팅 직후): **5/7 PASS**. 실패 2개(`playAdvancesTimeAndPauses`, `riskLevelChangesDuringPlayback`)는 모두 `No compose hierarchies found` — 차량 홈(`ai.umos.homescreen`)의 TaskView 가 테스트가 띄운 Activity 를 숨겨 화면이 없는 상태. 같은 테스트가 휴대폰 AVD 에서 통과하므로 앱 로직 문제는 아닌 것으로 판단. 실패 테스트는 실행할 때마다 바뀐다(불안정).
+- Gradle `connectedDebugAndroidTest` 는 Pleos 에뮬레이터에서 진행되지 않음(테스트를 user 0 에 띄움). Pleos 에서는 APK 2개 설치 후 `adb shell am instrument -w -r --user 10 com.prism.vehicle.app.test/androidx.test.runner.AndroidJUnitRunner` 로 실행.
+
+UI 테스트로 찾아 고친 앱 버그 2건:
+1. 레이더 라벨 crash — 표시 범위(-20~60m) 밖 차량의 라벨 좌표에서 `drawText` 가 음수 높이 제약을 만들어 `IllegalArgumentException` 으로 앱 종료 (`sudden_brake`·`dropout`·`rear_approach` 재생 시). 범위 밖 라벨은 그리지 않도록 수정.
+2. 좁은 창 레이아웃 — 우측 패널 고정 폭(520~640dp)이 창보다 넓으면 시나리오 목록·레이더 폭이 0. 폭이 패널의 2배 미만이면 위아래 배치로 수정.
 
 ## 5. 통합된 엔진 버전
 
@@ -65,7 +88,7 @@ FAIL: 없음. SKIP: 자동화된 Compose UI 계측 테스트(androidTest)는 작
 | 02 risk | **미통합** | Mock (TTC·간격 임계값 라벨) |
 | 03 simulation | **미통합** | Mock (`tests/tools/make_mock_scenarios.py`, seed 0) |
 | 04 visualization | **미통합** | PlaceholderRadar |
-| 05 vehicle-integration | 커밋 `43557c2` 이후 (태그 미생성) | 이 문서 |
+| 05 vehicle-integration | `feature/vehicle` 최신 커밋 (태그 미생성) | 이 문서 |
 
 ## 6. 오픈소스 조사 (실험 폴더 `현대 공모전/opensource-lab/`, PRISM 저장소 밖)
 
@@ -92,4 +115,4 @@ submodule / vendoring 은 쓰지 않았다. 네 저장소 모두 필요한 부�
 5. 공통 `contracts/` JSON Schema 미배포 → 계약 v1 은 지시서 예시 기준. 배포되면 `replay/Contracts.kt` 와 대조.
 6. 예측·위험 파일 형식을 JSONL(프레임당 한 줄)로 가정. 01/02 가 단일 JSON 으로 주면 어댑터 추가 필요.
 7. Release 서명·GitHub Releases 미진행.
-8. Compose UI 자동 계측 테스트 없음.
+8. Pleos 차량 홈 화면이 테스트용 Activity 창을 숨기거나 터치 주입을 막는 경우가 있어 Pleos 에뮬레이터 UI 테스트는 불안정.

@@ -1,8 +1,13 @@
 package com.prism.vehicle.app.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.Dp
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -64,9 +69,30 @@ fun PrismApp(vm: PrismViewModel) {
     }
 }
 
+/**
+ * 넓은 창(차량 2560px 가로)은 좌우 배치, 좁은 창(분할 화면·휴대폰)은 위아래 배치.
+ * 고정 폭 패널이 창보다 넓으면 주 영역 폭이 0 이 되는 문제를 막는다.
+ */
+@Composable
+private fun Adaptive(sideWidth: Dp, main: @Composable (Modifier) -> Unit, side: @Composable (Modifier) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        if (maxWidth >= sideWidth * 2) {
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                main(Modifier.weight(1f).fillMaxHeight())
+                side(Modifier.width(sideWidth).fillMaxHeight())
+            }
+        } else {
+            Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                main(Modifier.fillMaxWidth().weight(1f))
+                side(Modifier.fillMaxWidth().weight(1f))
+            }
+        }
+    }
+}
+
 @Composable
 private fun TopBar(s: UiState) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(Modifier.horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("PRISM", fontSize = 26.sp, fontWeight = FontWeight.Bold)
         Badge(s.mode.label, Color(0xFF37474F))
         // 지시서: 실시간 추론이 아닌 offline replay 임을 화면에 항상 표시
@@ -83,10 +109,10 @@ private fun Badge(text: String, bg: Color) {
 
 @Composable
 private fun SelectScreen(s: UiState, vm: PrismViewModel) {
-    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        Column(Modifier.weight(1f)) {
+    Adaptive(520.dp, side = { SdkPanel(s, vm, it.verticalScroll(rememberScrollState())) }, main = { mainMod ->
+        Column(mainMod) {
             Text("앱 모드", fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 AppMode.entries.forEach { m ->
                     val enabled = m != AppMode.ADAS
                     if (m == s.mode) Button(onClick = {}, enabled = enabled) { Text(m.label) }
@@ -97,7 +123,7 @@ private fun SelectScreen(s: UiState, vm: PrismViewModel) {
             Spacer(Modifier.height(16.dp))
             Text("시나리오 선택", fontWeight = FontWeight.Bold)
             if (s.scenarioIds.isEmpty()) Text("assets/scenarios/index.json 에 시나리오가 없습니다", color = Color(0xFFE57373))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(Modifier.weight(1f).testTag("scenario_list"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(s.scenarioIds) { id ->
                     Card(
                         onClick = { vm.openScenario(id) },
@@ -108,8 +134,7 @@ private fun SelectScreen(s: UiState, vm: PrismViewModel) {
             }
             if (s.loading) Text("불러오는 중…")
         }
-        SdkPanel(s, vm, Modifier.width(520.dp))
-    }
+    })
 }
 
 @Composable
@@ -142,10 +167,9 @@ private fun statusColor(st: SupportStatus) = when (st) {
 private fun DriveScreen(s: UiState, vm: PrismViewModel) {
     val t = s.timeline ?: return
     val snap = t.snapshotAt(s.clock.positionMs)
-    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        RadarSlot(snap, Modifier.weight(1f).fillMaxHeight())
+    Adaptive(560.dp, main = { RadarSlot(snap, it) }) { sideMod ->
         // 주행 중 화면: 짧고 제한된 안내만. 세부 원인·시간 이동은 정차 후 리플레이로 분리.
-        Column(Modifier.width(560.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(sideMod.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(t.manifest.title, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             LevelBanner(snap)
             Text("%.1f / %.1f s".format(s.clock.positionMs / 1000.0, t.durationMs / 1000.0), fontSize = 16.sp)
@@ -192,9 +216,8 @@ private fun PlayPause(clock: ReplayClock, vm: PrismViewModel) {
 private fun ReplayScreen(s: UiState, vm: PrismViewModel) {
     val t = s.timeline ?: return
     val snap = t.snapshotAt(s.clock.positionMs)
-    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        RadarSlot(snap, Modifier.weight(1f).fillMaxHeight())
-        Column(Modifier.width(640.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Adaptive(640.dp, main = { RadarSlot(snap, it) }) { sideMod ->
+        Column(sideMod, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("리플레이 · ${t.manifest.title}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             LevelBanner(snap)
             Slider(
@@ -204,7 +227,7 @@ private fun ReplayScreen(s: UiState, vm: PrismViewModel) {
                 modifier = Modifier.testTag("seek"),
             )
             Text("%.1f / %.1f s · 프레임 나이 %s".format(s.clock.positionMs / 1000.0, t.durationMs / 1000.0, snap.frameAgeMs?.let { "${it}ms" } ?: "-"))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 PlayPause(s.clock, vm)
                 ReplayClock.SPEEDS.forEach { sp ->
                     if (sp == s.clock.speed) Button(onClick = {}) { Text("${sp}x") }
