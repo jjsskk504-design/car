@@ -1,0 +1,207 @@
+[
+  {
+    "schema_version": "1.0",
+    "timestamp_ms": 0,
+    "risk_objects": [
+      {
+        "vehicle_id": "car_01",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_02",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_03",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_04",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_05",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "timestamp_ms": 100,
+    "risk_objects": [
+      {
+        "vehicle_id": "car_01",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_02",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_03",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_04",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_05",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "timestamp_ms": 200,
+    "risk_objects": [
+      {
+        "vehicle_id": "car_01",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_02",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_03",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_04",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_05",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "timestamp_ms": 300,
+    "risk_objects": [
+      {
+        "vehicle_id": "car_01",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_02",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_03",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_04",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_05",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      }
+    ]
+  },
+  {
+    "schema_version": "1.0",
+    "timestamp_ms": 400,
+    "risk_objects": [
+      {
+        "vehicle_id": "car_01",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_02",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_03",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_04",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      },
+      {
+        "vehicle_id": "car_05",
+        "risk_level": "NORMAL",
+        "reason_codes": [],
+        "ttc_s": null,
+        "risk_zones": []
+      }
+    ]
+  }
+]

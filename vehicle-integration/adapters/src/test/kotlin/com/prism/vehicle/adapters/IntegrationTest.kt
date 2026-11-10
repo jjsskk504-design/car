@@ -112,4 +112,11 @@ class FixtureErrorHandlingTest {
     }
     @Test fun gapIsPlayableButStale() { assertTrue(ready("gap").timeline.snapshotAt(250).stale) }
     @Test fun unknownScenarioFails() { failed("does_not_exist") }
+    @Test fun singleJsonFilesAreAccepted() {
+        val t = ready("single_json").timeline
+        assertTrue(t.issues.isEmpty())
+        assertEquals(200L, t.snapshotAt(200).prediction?.timestampMs) // prediction_frame.json = 200ms 프레임 하나
+        assertEquals(null, t.snapshotAt(100).prediction)
+        assertEquals(100L, t.snapshotAt(100).risk?.timestampMs)        // risk_frames.json = 배열
+    }
 }

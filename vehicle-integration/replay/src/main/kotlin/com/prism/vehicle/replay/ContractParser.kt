@@ -1,6 +1,7 @@
 package com.prism.vehicle.replay
 
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 /** JSON / JSONL 파싱. 실패는 예외가 아니라 줄 번호가 붙은 오류 목록으로 돌려준다. */
@@ -19,6 +20,17 @@ object ContractParser {
 
     fun parseRiskFrames(text: String, source: String = "risk_frames.jsonl") =
         parseLines(text, RiskFrame.serializer(), source)
+
+    /** 단일 .json 파일: 프레임 하나({...}) 또는 프레임 배열([...]) 둘 다 받는다. (지시서 예: prediction_frame.json) */
+    fun parsePredictionJson(text: String, source: String = "prediction_frames.json") =
+        parseJsonFile(text, PredictionFrame.serializer(), source)
+
+    fun parseRiskJson(text: String, source: String = "risk_frames.json") =
+        parseJsonFile(text, RiskFrame.serializer(), source)
+
+    private fun <T> parseJsonFile(text: String, serializer: KSerializer<T>, source: String): Parsed<List<T>> =
+        if (text.trimStart().startsWith("[")) parseOne(text, ListSerializer(serializer), source)
+        else parseOne(text, serializer, source).let { Parsed(it.value?.let(::listOf), it.issues) }
 
     private fun <T> parseOne(text: String, serializer: KSerializer<T>, source: String): Parsed<T> =
         try {

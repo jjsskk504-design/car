@@ -55,11 +55,25 @@ class JsonFileProviders(private val source: TextSource, private val root: String
         read(scenarioId, "vehicle_frames.jsonl", required = true) { ContractParser.parseVehicleFrames(it) }
 
     // 예측·위험 파일은 없어도 차량 재생은 가능하다(해당 엔진 미도착). 경고로만 남긴다.
-    override fun predictionFrames(scenarioId: String) =
-        read(scenarioId, "prediction_frames.jsonl", required = false) { ContractParser.parsePredictionFrames(it) }
+    // .jsonl(프레임당 한 줄)을 우선 읽고, 없으면 단일 .json(프레임 하나 또는 배열)을 읽는다.
+    override fun predictionFrames(scenarioId: String) = firstOf(
+        scenarioId, "prediction_frames.jsonl" to ContractParser::parsePredictionFrames,
+        "prediction_frames.json" to ContractParser::parsePredictionJson,
+        "prediction_frame.json" to ContractParser::parsePredictionJson,
+    )
 
-    override fun riskFrames(scenarioId: String) =
-        read(scenarioId, "risk_frames.jsonl", required = false) { ContractParser.parseRiskFrames(it) }
+    override fun riskFrames(scenarioId: String) = firstOf(
+        scenarioId, "risk_frames.jsonl" to ContractParser::parseRiskFrames,
+        "risk_frames.json" to ContractParser::parseRiskJson,
+        "risk_frame.json" to ContractParser::parseRiskJson,
+    )
+
+    private fun <T> firstOf(id: String, vararg candidates: Pair<String, (String, String) -> Parsed<T>>): Parsed<T> {
+        for ((file, parse) in candidates) {
+            source.read("$root/$id/$file")?.let { return parse(it, "$id/$file") }
+        }
+        return Parsed(null, listOf(Issue(Severity.WARNING, "$id/${candidates.first().first}", "파일 없음 (${candidates.joinToString { it.first }} 모두 없음)")))
+    }
 
     private fun <T> read(id: String, file: String, required: Boolean, parse: (String) -> Parsed<T>): Parsed<T> {
         val text = source.read("$root/$id/$file")

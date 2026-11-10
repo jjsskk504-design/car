@@ -45,6 +45,14 @@ $env:JAVA_HOME="$env:USERPROFILE\.jdks\ms-17.0.17"; .\gradlew.bat assembleDebug
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`
 
+UI 자동 테스트 (에뮬레이터 연결 상태, Simulation Mode 흐름 7개):
+
+```powershell
+.\gradlew.bat connectedDebugAndroidTest
+```
+
+빌드가 `... is located outside the root directory 'C:\dev\prism...'` 로 실패하면 정션 경로와 실제 경로가 섞인 것이다. `.\gradlew.bat --stop` 후 `adapters\build`, `replay\build` 를 지우고 다시 빌드한다.
+
 VS Code: `현대 공모전/.vscode/tasks.json` 에 에뮬레이터 실행 · 빌드 · 설치+실행 · logcat · 단위 테스트 · Mock 재생성 태스크가 있다.
 
 ## 다른 엔진과 연결하는 방법
@@ -55,8 +63,8 @@ VS Code: `현대 공모전/.vscode/tasks.json` 에 에뮬레이터 실행 · 빌
 |---|---|---|
 | `scenario_manifest.json` | 03 simulation | `scenario_id, title, duration_ms, step_ms, seed, ego_id, event_annotation[{t_ms,label}], provenance, mock` |
 | `vehicle_frames.jsonl` | 03 simulation | 한 줄에 VehicleFrame 하나 (계약 v1) |
-| `prediction_frames.jsonl` | 01 prediction | 한 줄에 PredictionFrame 하나. `timestamp_ms` 는 VehicleFrame 과 같은 값 |
-| `risk_frames.jsonl` | 02 risk | 한 줄에 RiskFrame 하나. `timestamp_ms` 는 VehicleFrame 과 같은 값 |
+| `prediction_frames.jsonl` | 01 prediction | 한 줄에 PredictionFrame 하나. `timestamp_ms` 는 VehicleFrame 과 같은 값. 없으면 `prediction_frames.json` → `prediction_frame.json` (프레임 하나 또는 배열) 순서로 찾는다 |
+| `risk_frames.jsonl` | 02 risk | 한 줄에 RiskFrame 하나. `timestamp_ms` 는 VehicleFrame 과 같은 값. 없으면 `risk_frames.json` → `risk_frame.json` 순서 |
 
 - 예측·위험 파일이 없으면 차량만 재생하고 경고를 남긴다. VehicleFrame 이 없으면 재생하지 않는다.
 - 예측·위험은 **같은 timestamp 의 VehicleFrame 좌표계에서만** 그린다. 짝이 없는 프레임은 버리고 경고로 보고한다(다른 시점 좌표를 섞지 않음).

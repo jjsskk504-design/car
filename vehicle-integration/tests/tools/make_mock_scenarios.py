@@ -255,6 +255,11 @@ def make_fixtures(normal):
     case("bad_risk_level", raw={"risk_frames.jsonl": json.dumps(dict(rf[0], risk_objects=[dict(rf[0]["risk_objects"][0], risk_level="DANGER")])) + "\n"})
     case("broken_json", raw={"vehicle_frames.jsonl": json.dumps(vf[0]) + "\n{\"schema_version\": \"1.0\", \"timestamp_ms\": \n"})
     case("gap", v=[vf[0], vf[4]], p=[pf[0], pf[4]], r=[rf[0], rf[4]])
+    # 01/02 가 JSONL 대신 단일 .json 으로 줄 때: 예측은 프레임 하나, 위험은 프레임 배열
+    case("single_json", p=None, r=None, raw={
+        "prediction_frame.json": json.dumps(pf[2], ensure_ascii=False, indent=2),
+        "risk_frames.json": json.dumps(rf, ensure_ascii=False, indent=2),
+    })
     (FIXTURES.parent / "index.json").write_text("[]", encoding="utf-8")
 
 
