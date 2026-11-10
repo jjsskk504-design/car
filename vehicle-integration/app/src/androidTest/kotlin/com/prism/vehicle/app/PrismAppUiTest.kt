@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.lifecycle.ViewModelProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
@@ -29,6 +31,7 @@ class PrismAppUiTest {
 
     @Test fun listsAllScenarios() {
         rule.waitUntil(5_000) { vm.ui.value.scenarioIds.isNotEmpty() }
+        rule.waitUntil(10_000) { runCatching { rule.onNodeWithTag("scenario_normal").fetchSemanticsNode() }.isSuccess } // 첫 실행 시 창이 늦게 붙음
         listOf("normal", "rear_approach", "sudden_brake", "lane_change", "chain_reaction", "dropout").forEach {
             rule.onNodeWithTag("scenario_$it").assertExists()
         }
@@ -38,9 +41,9 @@ class PrismAppUiTest {
     @Test fun playAdvancesTimeAndPauses() {
         open("chain_reaction")
         rule.onNodeWithText("MOCK 데이터").assertExists()
-        rule.onNodeWithTag("play").performClick()
+        rule.onNodeWithTag("play").performSemanticsAction(SemanticsActions.OnClick) // 차량 홈 TaskView 에서 좌표 터치 주입이 막히는 경우가 있어 semantics 클릭 사용
         rule.waitUntil(5_000) { vm.ui.value.clock.positionMs > 1_000 }
-        rule.onNodeWithTag("pause").performClick()
+        rule.onNodeWithTag("pause").performSemanticsAction(SemanticsActions.OnClick)
         val paused = vm.ui.value.clock.positionMs
         Thread.sleep(500)
         rule.waitForIdle()

@@ -109,5 +109,7 @@ fun PlaceholderRadar(snapshot: Snapshot, modifier: Modifier = Modifier) {
 }
 
 private fun DrawScope.label(m: androidx.compose.ui.text.TextMeasurer, text: String, at: Offset, color: Color) {
+    // drawText 는 (size - topLeft) 로 제약을 만든다. 표시 범위 밖 차량(예: 후방 -25m)의 라벨이면 음수 높이로 crash 하므로 건너뛴다.
+    if (at.x < 0 || at.y < 0 || at.x > size.width - 48f || at.y > size.height - 24f) return
     drawText(m, text, at, TextStyle(color = color, fontSize = 13.sp))
 }
