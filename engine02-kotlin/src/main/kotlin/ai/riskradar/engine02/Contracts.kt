@@ -73,7 +73,7 @@ data class RiskGeometry(
     val neighborGaps: List<NeighborGap> = emptyList(),
     val horizonS: Double? = null,
     val stepS: Double? = null,
-    val semantics: String = "local tangent OBB geometry; CV hypothesis; no collision probability",
+    val semantics: String = "local tangent OBB geometry; CV hypothesis, no collision probability",
 )
 
 data class IntentFeatures(

@@ -19,6 +19,7 @@ class EvaluationTest {
         assertEquals(1, r.missedEvents)
         assertEquals(1.0 / 3.0, r.precision)
         assertEquals(0.5, r.recall)
+        assertEquals(0.5, r.missRate)
         assertEquals(4.0, r.falseAlertsPerTrackHour)
         assertEquals(listOf(1.5), r.leadTimeS)
     }
@@ -53,6 +54,7 @@ class EvaluationTest {
         val r = eventMetrics(emptyList(), emptyList(), exposureTrackHours = 1.0)
         assertNull(r.precision)
         assertNull(r.recall)
+        assertNull(r.missRate)
         assertNull(r.meanLeadTimeS)
         assertFailsWith<IllegalArgumentException> {
             eventMetrics(emptyList(), emptyList(), 0.0)
@@ -103,5 +105,34 @@ class EvaluationTest {
         val w = windows().toMutableList()
         w[1] = w[1].copy(startMs = 100, endMs = 800)
         assertFailsWith<IllegalArgumentException> { validateHoldout(w) }
+    }
+
+    @Test fun temporalAssignmentIgnoresExistingPartitionAndAcceptsExactBoundaries() {
+        val source = windows().map { it.copy(partition = Partition.TEST) }
+        assertEquals(windows(), temporalHoldout(source, trainEndMs = 1000, validationEndMs = 3000, embargoMs = 1000))
+    }
+
+    @Test fun temporalAssignmentRejectsStraddlingAndEmbargoWindows() {
+        val source = windows()
+        for (invalid in listOf(source[1].copy(startMs = 999), source[1].copy(startMs = 1999),
+            source[1].copy(endMs = 3001))) {
+            assertFailsWith<IllegalArgumentException> {
+                temporalHoldout(listOf(source[0], invalid, source[2]), 1000, 3000, 1000)
+            }
+        }
+    }
+
+    @Test fun temporalAssignmentStillRejectsIdentityLeakage() {
+        val source = windows()
+        assertFailsWith<IllegalArgumentException> {
+            temporalHoldout(source + source[2].copy(site = source[0].site), 1000, 3000)
+        }
+    }
+
+    @Test fun extremeTimestampCannotOverflowIntoAnEventMatch() {
+        val r = eventMetrics(listOf(Event("a", Direction.LEFT, Long.MIN_VALUE)),
+            listOf(Event("a", Direction.LEFT, Long.MAX_VALUE)), 1.0)
+        assertEquals(0, r.truePositiveEvents)
+        assertEquals(1.0, r.missRate)
     }
 }

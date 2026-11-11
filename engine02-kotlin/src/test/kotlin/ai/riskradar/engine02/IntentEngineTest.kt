@@ -228,4 +228,12 @@ class IntentEngineTest {
         assertTrue(r.researchOnly)
         assertNull(r.features?.longitudinalAccelerationMps2?.takeIf { it > 0.0 })
     }
+
+    @Test fun exactMinimumSamplingIntervalUsesIntegerMilliseconds() {
+        val engine = IntentEngine(EngineParameters(minDtMs = 1001, warmupMs = 1001, expiryMs = 3000))
+        engine.observe(obs(), nowMs = 0)
+        val early = engine.observe(obs(1000), nowMs = 1000)
+        assertEquals(listOf("sampling_interval_too_short"), early.reasons)
+        assertEquals("KEEP", engine.observe(obs(1001), nowMs = 1001).motionIntention)
+    }
 }

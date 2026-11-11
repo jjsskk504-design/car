@@ -15,7 +15,10 @@ data class EventMetrics(
     val meanLeadTimeS: Double?,
     val exposureTrackHours: Double,
     val leadWindowMs: Long,
-)
+) {
+    val missRate: Double?
+        get() = (truePositiveEvents + missedEvents).takeIf { it > 0 }?.let { missedEvents.toDouble() / it }
+}
 
 /** Alerts must already represent debounced episode ONSETS, not frame-level repeated scores. */
 fun eventMetrics(
@@ -32,7 +35,7 @@ fun eventMetrics(
                 index !in used && a.trackId == event.trackId
                     && a.direction == event.direction
                     && a.timestampMs <= event.timestampMs
-                    && event.timestampMs - a.timestampMs <= leadWindowMs
+                    && event.timestampMs - a.timestampMs in 0..leadWindowMs
             }.minByOrNull { it.value.timestampMs }
         if (match != null) {
             used.add(match.index)
@@ -106,4 +109,33 @@ fun validateHoldout(windows: List<EvaluationWindow>, embargoMs: Long = 0): Boole
         }
     }
     return true
+}
+
+/** Assign complete windows to temporal partitions before fitting or feature extraction. */
+fun temporalHoldout(
+    windows: List<EvaluationWindow>,
+    trainEndMs: Long,
+    validationEndMs: Long,
+    embargoMs: Long = 0,
+): List<EvaluationWindow> {
+    require(trainEndMs >= 0 && trainEndMs < validationEndMs && embargoMs >= 0)
+    val assigned = windows.map { window ->
+        val partition = when {
+            window.endMs <= trainEndMs -> Partition.TRAIN
+            window.startMs >= trainEndMs && window.startMs - trainEndMs >= embargoMs &&
+                window.endMs <= validationEndMs -> Partition.VALIDATION
+            window.startMs >= validationEndMs && window.startMs - validationEndMs >= embargoMs -> Partition.TEST
+            else -> throw IllegalArgumentException("Window straddles a split or embargo boundary")
+        }
+        window.copy(partition = partition)
+    }
+    validateHoldout(assigned, embargoMs)
+    return assigned
+}
+
+/** Run sampled physics QA before a synthetic scene can be used for evaluation. */
+fun requirePhysicalPass(scene: PhysicalScene): PhysicalAudit {
+    val audit = PhysicalAuditor.audit(scene)
+    require(audit.status == "PASS" && audit.collisions.isEmpty()) { "Physical QA FAIL: ${audit.failures}" }
+    return audit
 }

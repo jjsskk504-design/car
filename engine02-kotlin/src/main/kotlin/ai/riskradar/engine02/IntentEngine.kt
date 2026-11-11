@@ -86,8 +86,9 @@ class IntentEngine(val parameters: EngineParameters = EngineParameters()) {
         val state: TrackState
         if (previous != null) {
             val old = previous.observation
-            val dt = (o.timestampMs - old.timestampMs) / 1000.0
-            if (dt * 1000 < p.minDtMs) return invalid("sampling_interval_too_short")
+            val elapsedMs = o.timestampMs - old.timestampMs
+            if (elapsedMs < p.minDtMs) return invalid("sampling_interval_too_short")
+            val dt = elapsedMs / 1000.0
             val lateralResidual = o.dM - old.dM - (old.vdMps + o.vdMps) * dt / 2
             val longitudinalResidual = o.sM - old.sM - (old.vsMps + o.vsMps) * dt / 2
             if (hypot(lateralResidual, longitudinalResidual) > p.maxResidualM) {

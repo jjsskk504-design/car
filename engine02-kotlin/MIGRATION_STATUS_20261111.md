@@ -72,3 +72,17 @@ formally proven across all historic dataset inputs.
 PASS: Kotlin JVM build + 59/59 unit tests on notebook.
 PARTIAL: Migration of engine algorithms to standalone Kotlin.
 BLOCKED/PENDING: Android cross-module product integration and real-world validation.
+
+## VehicleFrame and parity follow-up
+
+- The independent Engine02 JVM build passed 83/83 tests across seven suites.
+- The independent PRISM contract build passed 4/4 tests using the existing team
+  replay DTOs and parser. The contract sources are compiled as test sources.
+- Kotlin matched the Python V3 oracle over 49 synthetic frames in nine
+  default-parameter scenarios. The fixture generator runs offline and the
+  Kotlin builds run without Python.
+- The adapter requires synchronized body-center road projections and
+  frame-aligned signal evidence. Offline evaluation includes temporal splits,
+  miss rate, and the physical QA gate.
+- Android/Pleos integration and live road projection are pending.
+  Real-world metrics: NOT MEASURED.

@@ -2,13 +2,14 @@ package ai.riskradar.engine02
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
 
 class PhysicalSimulationTest {
     @Test fun allFourSyntheticScenariosPassIndependentPhysicalGate() {
         for (name in PhysicalSimulator.scenes) {
-            val report = PhysicalAuditor.audit(PhysicalSimulator.simulate(name))
+            val report = requirePhysicalPass(PhysicalSimulator.simulate(name))
             assertEquals("PASS", report.status, name + ": " + report.failures.take(8))
             assertEquals(201, report.samples)
             assertTrue(report.pairChecks > 0)
@@ -29,7 +30,9 @@ class PhysicalSimulationTest {
                     frame.copy(vehicles = bodies)
                 }
             }
-            val report = PhysicalAuditor.audit(source.copy(world = modified))
+            val invalid = source.copy(world = modified)
+            assertFailsWith<IllegalArgumentException> { requirePhysicalPass(invalid) }
+            val report = PhysicalAuditor.audit(invalid)
             assertEquals("FAIL", report.status)
             assertTrue("ACTUAL_BODY_COLLISION" in report.failures)
             assertTrue(report.collisions.any { it.timestampMs == index*50L })
