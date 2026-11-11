@@ -1,36 +1,42 @@
 # simulation-engine (PRISM PART 03 / 교통 시뮬레이션·데이터 엔진)
 
-HighwayEnv(MIT)의 도로·차량 물리를 사용해 **재현 가능한 다중 차량 교통 시나리오**를 만들고,
-PRISM 공통 계약 **VehicleFrame v1 JSONL**로 내보냅니다.
+**Kotlin/JVM** 엔진입니다. HighwayEnv(MIT)의 도로·차량 물리(IDM, 차선 추종 조향, 자전거 모델)를 Kotlin으로 옮겨
+**재현 가능한 다중 차량 교통 시나리오**를 만들고, PRISM 공통 계약 **VehicleFrame v1 JSONL**로 내보냅니다.
 
 > 이 엔진은 **합성 시뮬레이션 데이터 생성기**입니다. 위험도 판정, 궤적 예측, UI, Pleos 연동은 하지 않습니다.
 > 실제 차량의 안전 시스템이나 실시간 충돌 방지 장치가 아닙니다.
 
-## 실행 (`simulation-engine/` 폴더 안에서, Python 3.10 이상, 검증 환경은 Windows 11 + 3.13.2)
+## 실행 (`simulation-engine/` 폴더 안에서, JDK 17 이상, 검증 환경은 Windows 11 + JDK 21 + Gradle 8.14)
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -r requirements.txt          # macOS/Linux: .venv/bin/python
-.venv/Scripts/python -m generators scenarios/*.yaml -o out          # 7종 생성 -> out/
-.venv/Scripts/python -m pytest -q                                   # 테스트
-.venv/Scripts/python -m visualization.replay out docs/replay        # 2D 재생 GIF와 PNG
+./gradlew generate      # scenarios/*.yaml 7종 -> samples/
+./gradlew test          # 테스트
+./gradlew replay        # samples/ -> docs/replay/*.png, *.gif
+./gradlew run --args="scenarios -o out"   # 다른 폴더로 출력
 ```
 
-정확히 검증한 버전을 쓰려면 `requirements.lock.txt`로 설치합니다.
+Windows에서는 `gradlew.bat`을 씁니다. **한글 경로에서는 `gradlew test`가 `ClassNotFoundException`으로 실패**합니다(05와 같은 문제).
+영문 정션을 만들어 그 경로에서 실행합니다: `cmd /c mklink /J C:\dev\prism "<PRISM 폴더>"` 후 `C:\dev\prism\simulation-engine`에서 실행.
+
+### Python 버전에서 바꾼 것 (v0.1.0 → v0.2.0)
+
+- 언어를 Python에서 Kotlin으로 바꿨습니다. HighwayEnv는 Python 전용이라 쓰는 부분(직선 도로, IDM, 차선 추종 조향, 자전거 모델)만 `adapters/HighwaySim.kt`로 옮겼습니다.
+- 옮긴 결과가 원본과 같은지 확인했습니다: 시나리오 7종의 모든 프레임·차량·필드가 Python + HighwayEnv 출력과 **차이 0**입니다(`docs/kotlin_port_parity.log`).
+- 다른 점은 하나입니다: `sensor_dropout`의 car_05 위치 노이즈는 난수 생성기가 numpy에서 `java.util.Random`으로 바뀌어 값이 다릅니다(seed 107 고정, 재현 가능).
 
 ## 폴더
 
 | 폴더 | 역할 |
 |---|---|
-| `adapters/` | `highway_adapter.py`: HighwayEnv의 Road와 IDMVehicle 내부 상태를 읽음<br>`ego_transform.py`: 월드 좌표를 자차 좌표로 변환 |
-| `generators/` | `scenario_runner.py`: YAML 시나리오 실행, 결정적 이벤트 주입, VehicleFrame과 매니페스트 생성<br>`__main__.py`: 명령줄 실행 |
-| `exporters/` | `jsonl.py`: JSONL과 매니페스트 저장(NaN/Inf 금지) |
-| `visualization/` | `replay.py`: 2D 재생 GIF, 시간별 PNG 스냅샷, ffmpeg가 있으면 MP4 |
+| `adapters/` | `HighwaySim.kt`: HighwayEnv 차량 모델의 Kotlin 이식(직선 도로, IDM, 차선 추종 조향, 자전거 모델, 충돌 판정)<br>`EgoTransform.kt`: 월드 좌표를 자차 좌표로 변환 |
+| `generators/` | `Scenario.kt`: YAML 읽기·검증<br>`ScenarioRunner.kt`: 결정적 이벤트 주입, VehicleFrame과 매니페스트 생성<br>`Main.kt`: 명령줄 실행 |
+| `exporters/` | `Jsonl.kt`: JSONL과 매니페스트 저장(NaN/Inf 금지) |
+| `visualization/` | `Replay.kt`: 2D 재생 GIF, 시간별 PNG 스냅샷(Java2D) |
 | `scenarios/` | 시나리오 7종 YAML |
 | `samples/` | 생성 결과(커밋됨, 테스트로 재현성 검증) |
 | `schema/` | VehicleFrame v1 JSON Schema 로컬 사본(공통 `contracts/`가 생기면 그것이 기준) |
-| `tests/` | 좌표 변환, 단위, ID, 재현성, 메타데이터 테스트 |
-| `docs/` | `replay/*.gif, *.png`, `test_log.txt`, 원본 HighwayEnv 실행 로그 |
+| `tests/` | 좌표 변환, 단위, ID, 재현성, 메타데이터 테스트(JUnit 5, kotlin-test) |
+| `docs/` | `replay/*.gif, *.png`, `test_log.txt`, `kotlin_port_parity.log`(Python 원본과 대조), 원본 오픈소스 실행 로그 |
 
 ## 출력
 
@@ -84,6 +90,6 @@ python -m venv .venv
 
 | 오픈소스 | 실행 결과 |
 |---|---|
-| HighwayEnv | `highway-v0`, `merge-v0`, `intersection-v0`, `roundabout-v0` 헤드리스 실행 PASS |
+| HighwayEnv | `highway-v0`, `merge-v0`, `intersection-v0`, `roundabout-v0` 헤드리스 실행 PASS. v0.1.0(Python)은 pip 패키지로 직접 사용, v0.2.0(Kotlin)은 알고리즘을 이식하고 출력이 같은지 대조 |
 | INTERACTION | 저장소의 테스트 샘플로 unittest, track 로드, 시각화 PASS(시각화는 matplotlib 호환 shim 사용) |
 | CARLA | clone만 완료. 클라이언트 설치 FAIL(Python 3.13용 패키지 없음), 서버는 하드웨어·디스크 부족으로 BLOCKED |
