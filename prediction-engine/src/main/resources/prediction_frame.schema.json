@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prism.local/schema/prediction-frame-1.0.json",
+  "title": "PRISM PredictionFrame 1.0 (Part 01 local validation copy)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "timestamp_ms", "predictions"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "timestamp_ms": {"type": "integer", "minimum": 0},
+    "predictions": {"type": "array"}
+  }
+}

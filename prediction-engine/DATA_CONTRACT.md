@@ -55,5 +55,5 @@ JSONL 한 줄에 하나의 완전한 VehicleFrame을 둡니다. 입력 줄 순�
 - `confidence`: 보정되지 않은 현재 버전은 반드시 `null`
 - `vehicle_id`: 최신 VehicleFrame에 실제 존재하는 ID만 허용
 
-내부 검사 Schema는 `src/prism_predict/schema/prediction_frame.schema.json`입니다. 공통 Schema가 제공되면 CI에서 양쪽을 비교하고, 불일치가 있으면 임의 수정 대신 이슈를 등록해야 합니다.
+내부 참고 Schema는 `src/main/resources/prediction_frame.schema.json`이며 Kotlin의 `PredictionEngine.validatePredictionFrame()`가 실제 런타임 검사를 수행합니다. 공통 Schema가 제공되면 CI에서 양쪽을 비교하고, 불일치가 있으면 임의 수정 대신 이슈를 등록해야 합니다.
 
