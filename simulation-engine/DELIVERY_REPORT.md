@@ -1,5 +1,19 @@
 # DELIVERY_REPORT — PART 03 simulation-engine
 
+## v0.2.0 (2026-11-11): Python → Kotlin 전환
+
+- 브랜치: `feature/simulation-kotlin` · 상태: **TESTED** (로컬 Gradle 테스트 실제 실행)
+- 이유: 개발 언어를 Java/Kotlin으로 맞추기 위함(팀 앱 05도 Kotlin).
+- 방식: HighwayEnv는 Python 전용 라이브러리라 그대로 쓸 수 없어서, 이 엔진이 쓰는 부분(직선 도로, IDM, 차선 추종 조향, 수정 자전거 모델, 충돌 판정)만 `adapters/HighwaySim.kt`로 **이식**했습니다. MIT 라이선스 원문은 `THIRD_PARTY_NOTICES.md`에 있습니다.
+- 원본 대조: 이식 직전의 Python + highway-env 1.12.1 출력과 시나리오 7종 모든 값을 비교해 **차이 0** (`docs/kotlin_port_parity.log`). 예외는 `sensor_dropout` car_05 노이즈 하나(numpy → `java.util.Random`, seed 고정).
+- 테스트: `gradlew test` **PASS 20 / FAIL 0 / SKIP 0** (`docs/test_log.txt`). Python 80개와 같은 항목이며, 시나리오 7종을 각 테스트 안에서 반복합니다. β 수정을 일부러 되돌리면 `egoPoseSidecarReconstructsMotion`이 FAIL 하는 것도 확인했습니다.
+- JSON Schema 검사는 `jsonschema` 대신 같은 규칙을 직접 검사하는 `assertVehicleFrameV1`(tests/TestSupport.kt)로 바꿨습니다.
+- 시각화는 matplotlib 대신 Java2D로 다시 만들었습니다(PNG·GIF). MP4는 여전히 만들지 않습니다.
+- 환경: Windows 11, JDK 21, Gradle 8.14, Kotlin 2.0.21. 한글 경로에서는 테스트가 실패하므로 영문 정션 `C:\dev\prism`에서 실행합니다.
+- 충돌 시 서로 밀어내는 HighwayEnv impact 동작은 이식하지 않았습니다(7종 모두 충돌 0건이라 판정만 필요). 충돌 시나리오가 생기면 추가해야 합니다.
+
+아래는 v0.1.0(Python) 당시 기록입니다.
+
 - 작성일: 2026-11-10
 - 브랜치: `feature/simulation`
 - 상태: **TESTED** (로컬에서 실제로 테스트를 실행함. 다른 엔진과 연결한 INTEGRATED 단계는 아님)
