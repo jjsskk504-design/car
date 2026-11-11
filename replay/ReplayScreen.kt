@@ -222,15 +222,15 @@ private fun DetailPanel(
                 if (!present) Text("이 시점에 차량 위치가 관측되지 않았습니다(판단 보류).", color = RadarColors.subtext, fontSize = 14.sp)
                 if (risk != null && lv != RiskLevel.NORMAL) {
                     Text("원인: ${CauseCatalog.describe(risk)}", color = RadarColors.text, fontSize = 15.sp)
-                    if (risk.causeCodes.isNotEmpty()) Text("원인 코드: ${risk.causeCodes.joinToString()}", color = RadarColors.subtext, fontSize = 14.sp)
+                    if (risk.reasonCodes.isNotEmpty()) Text("원인 코드: ${risk.reasonCodes.joinToString()}", color = RadarColors.subtext, fontSize = 14.sp)
                     if (risk.sourceVehicleIds.isNotEmpty()) Text("영향을 준 차량: ${risk.sourceVehicleIds.joinToString()}", color = RadarColors.text, fontSize = 15.sp)
                 }
                 frame.prediction?.predictions?.firstOrNull { it.vehicleId == selectedId }?.let { p ->
-                    Text("예측 후보", color = RadarColors.subtext, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                    p.candidates.forEach { c ->
-                        val used = risk?.trajectoryCandidateId == c.candidateId
-                        val horizon = c.points.maxOfOrNull { it.tOffsetMs }?.let { "%.1f초".format(it / 1000f) } ?: "-"
-                        Text("• ${CauseCatalog.maneuver(c.maneuver)} ($horizon)" + if (used) " — 위험 판단 근거" else "",
+                    Text("예측 궤적", color = RadarColors.subtext, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    p.trajectories.forEach { c ->
+                        val used = risk?.trajectoryMode != null && risk.trajectoryMode == c.mode
+                        val horizon = c.points.maxOfOrNull { pt -> pt.dtMs }?.let { ms -> "%.1f초".format(ms / 1000f) } ?: "-"
+                        Text("• ${CauseCatalog.maneuver(c.mode)} ($horizon)" + if (used) " — 위험 판단 근거" else "",
                             color = if (used) RadarColors.text else RadarColors.subtext, fontSize = 14.sp)
                     }
                 }

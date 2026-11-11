@@ -41,7 +41,7 @@ class ExampleIoTest {
                     }
                 })
                 put("trajectories", JSONArray().apply {
-                    scene.trajectories.forEach { t -> put("${t.vehicleId}:${t.candidateId}${if (t.emphasized) " (강조)" else ""}") }
+                    scene.trajectories.forEach { t -> put("${t.vehicleId}:${t.mode}${if (t.emphasized) " (강조)" else ""}") }
                 })
                 put("regions", JSONArray(scene.regions.map { it.vehicleId }))
                 put("relations", JSONArray(scene.relations.map { "${it.fromId} -> ${it.toId}" }))

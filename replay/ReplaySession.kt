@@ -143,6 +143,36 @@ object ReplayJson {
         )
     }
 
+    /**
+     * 팀 저장소 시나리오 형식을 읽는다: vehicle_frames.jsonl(필수) + prediction_frames.jsonl + risk_frames.jsonl.
+     * 한 줄 = 계약 프레임 하나. timestamp_ms 가 같은 프레임끼리 묶고, 깨진 줄은 건너뛰며 경고에 남긴다.
+     */
+    fun fromJsonl(
+        id: String,
+        title: String,
+        vehicleJsonl: String,
+        predictionJsonl: String? = null,
+        riskJsonl: String? = null,
+        description: String = "",
+        road: RoadConfig = RoadConfig(),
+    ): Parsed {
+        val warnings = ArrayList<String>()
+        fun <T> lines(text: String?, name: String, parse: (JSONObject) -> ContractJson.ParseResult<T>): List<T> =
+            text.orEmpty().lines().mapIndexedNotNull { i, line ->
+                if (line.isBlank()) return@mapIndexedNotNull null
+                runCatching { parse(JSONObject(line)) }.fold(
+                    onSuccess = { r -> warnings += r.warnings.map { "$name:${i + 1} $it" }; r.value },
+                    onFailure = { e -> warnings += "$name:${i + 1} 파싱 실패: ${e.message}"; null },
+                )
+            }
+        val vehicles = lines(vehicleJsonl, "vehicle_frames", ContractJson::parseVehicleFrame)
+        val predictions = lines(predictionJsonl, "prediction_frames", ContractJson::parsePredictionFrame).associateBy { it.timestampMs }
+        val risks = lines(riskJsonl, "risk_frames", ContractJson::parseRiskFrame).associateBy { it.timestampMs }
+        val frames = vehicles.sortedBy { it.timestampMs }.distinctBy { it.timestampMs }
+            .map { v -> ReplayFrame(v, predictions[v.timestampMs], risks[v.timestampMs]) }
+        return Parsed(ReplaySession(id, title, description, road, frames), warnings)
+    }
+
     fun toJson(s: ReplaySession): String = JSONObject().apply {
         put("format", "prism.visualization.replay/0.1")
         put("scenario", JSONObject().apply {

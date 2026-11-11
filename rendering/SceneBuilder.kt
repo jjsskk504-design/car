@@ -34,27 +34,28 @@ data class SceneVehicle(
     val level: DisplayLevel,
     /** 위험 판정 엔진이 보낸 원래 등급(표시 등급과 다를 수 있음: 지연·동기화 실패 시 판단 보류). */
     val reportedLevel: RiskLevel?,
-    val laneId: Int?,
+    val laneId: String?,
     val causeText: String?,
-    val causeCodes: List<String>,
+    val reasonCodes: List<String>,
     /** 다른 차량 위험의 원인으로 지목된 차량. */
     val isSource: Boolean,
 )
 
-/** VehicleFrame 에는 없지만 RiskFrame 에 등장하는 차량(예: 센서 누락). 항상 판단 보류로 표시한다. */
+/** VehicleFrame 에는 없지만 RiskFrame 에 등장하는 차량(예: 센서 누락). 항상 판단 보류로 표시한다. risk_zones 가 없으면 위치를 그리지 않고 상태 줄에만 집계한다. */
 data class SceneGhost(val vehicleId: String, val region: List<Point2>, val anchor: Point2?, val causeText: String)
 
 data class SceneTrajectory(
     val vehicleId: String,
-    val candidateId: String,
-    val maneuver: String,
+    /** PredictionFrame trajectories[].mode (예: lane_keep, braking) */
+    val mode: String,
     val points: List<Point2>,
-    /** 위험 판단에 쓰인 후보(굵게) 여부 */
+    /** 위험 판단에 쓰인 궤적(굵게) 여부 */
     val emphasized: Boolean,
     val level: DisplayLevel,
 )
 
-data class SceneRegion(val vehicleId: String, val polygon: List<Point2>, val level: DisplayLevel)
+/** RiskFrame risk_zones[] 하나(dtMs 시점 영역, 표시 기준으로 변환된 좌표). */
+data class SceneRegion(val vehicleId: String, val polygon: List<Point2>, val level: DisplayLevel, val dtMs: Long = 0)
 
 data class SceneRelation(val fromId: String, val toId: String, val level: DisplayLevel)
 
@@ -91,6 +92,7 @@ data class Scene(
  * - RELATIVE_TO_EGO: 자차가 현재 속도를 유지한다고 보고 자차 이동량을 빼서 "나와의 상대 위치 변화"로 그린다(기본).
  *   자차 고정 화면에서 지면 기준 미래 위치를 그리면 모든 차량이 앞으로 질주하는 것처럼 보여 위험 관계가 읽히지 않는다.
  * - AS_GIVEN: PredictionFrame 좌표를 그대로 그린다.
+ * 위험 영역(risk_zones)도 각 dt_ms 에 맞춰 같은 기준으로 변환한다.
  */
 enum class TrajectoryReference { RELATIVE_TO_EGO, AS_GIVEN }
 
@@ -173,16 +175,25 @@ object SceneBuilder {
                 nose = VehicleGeometry.nose(v.x, v.y, v.headingRad, v.lengthM, v.widthM),
                 level = lv, reportedLevel = r?.level, laneId = v.laneId,
                 causeText = r?.let { if (lv == DisplayLevel.NORMAL) null else CauseCatalog.describe(it) },
-                causeCodes = r?.causeCodes.orEmpty(),
+                reasonCodes = r?.reasonCodes.orEmpty(),
                 isSource = trustRisk && v.id in sources,
             )
         }.let { list -> if (list.none { it.isEgo }) list + defaultEgo(egoId) else list }
 
+        // 예측 궤적·위험 영역 표시 기준(자차 상대 운동): 기준 시점 좌표에서 자차 이동량(dt × 자차 속도)을 뺀다
+        val egoState = vehicles.firstOrNull { it.id == egoId }
+        val (egoVx, egoVy) = if (options.trajectoryReference == TrajectoryReference.RELATIVE_TO_EGO && egoState != null &&
+            egoState.vx.isFinite() && egoState.vy.isFinite()) egoState.vx to egoState.vy else 0f to 0f
+        fun shift(p: Point2, dtMs: Long): Point2 { val s = dtMs / 1000f; return Point2(p.x - egoVx * s, p.y - egoVy * s) }
+        fun shiftZone(z: ai.prism.visualization.model.RiskZone) = z.polygon.map { shift(it, z.dtMs) }
+
         val present = sceneVehicles.map { it.id }.toSet()
         val ghosts = risks.values.filter { it.vehicleId !in present }.map { r ->
+            val zone = r.riskZones.minByOrNull { it.dtMs }
+            val region = zone?.let { shiftZone(it) }.orEmpty()
             SceneGhost(
-                vehicleId = r.vehicleId, region = r.riskRegion,
-                anchor = r.riskRegion.takeIf { it.isNotEmpty() }?.let { centroid(it) },
+                vehicleId = r.vehicleId, region = region,
+                anchor = region.takeIf { it.isNotEmpty() }?.let { centroid(it) },
                 causeText = CauseCatalog.describe(r),
             )
         }
@@ -195,39 +206,33 @@ object SceneBuilder {
         val levelById = sceneVehicles.associate { it.id to it.level }
 
         // 4) 위험 영역
-        val regions = risks.values.filter { it.riskRegion.size >= 3 && it.vehicleId in emphasized }
-            .map { SceneRegion(it.vehicleId, it.riskRegion, levelById.getValue(it.vehicleId)) }
+        val regions = risks.values.filter { it.vehicleId in emphasized }
+            .flatMap { r -> r.riskZones.sortedBy { it.dtMs }.map { z -> SceneRegion(r.vehicleId, shiftZone(z), levelById.getValue(r.vehicleId), z.dtMs) } }
 
         // 5) 궤적
         if (predictionFrame == null && mode == DisplayMode.DETAIL) {
             notices += SceneNotice(NoticeKind.NO_PREDICTION_DATA, "예측 궤적 없음")
         }
         val trajectories = ArrayList<SceneTrajectory>()
-        val egoState = vehicles.firstOrNull { it.id == egoId }
-        val (egoVx, egoVy) = if (options.trajectoryReference == TrajectoryReference.RELATIVE_TO_EGO && egoState != null &&
-            egoState.vx.isFinite() && egoState.vy.isFinite()) egoState.vx to egoState.vy else 0f to 0f
         predictionFrame?.predictions?.forEach { p ->
             val lv = levelById[p.vehicleId] ?: return@forEach
             if (lv == DisplayLevel.EGO) return@forEach
-            // 위험 판단 근거 후보가 PredictionFrame 에 없으면(엔진 간 불일치) 근거 없음으로 보고 모든 후보를 표시
-            val chosen = risks[p.vehicleId]?.trajectoryCandidateId?.takeIf { id -> p.candidates.any { it.candidateId == id } }
+            // 위험 판단에 쓰인 궤적 mode(선택 필드 trajectory_mode)가 없거나 PredictionFrame 에 없으면 모든 궤적을 표시
+            val chosen = risks[p.vehicleId]?.trajectoryMode?.takeIf { m -> p.trajectories.any { it.mode == m } }
             val show = when (mode) {
                 DisplayMode.DRIVING -> p.vehicleId in emphasized
                 DisplayMode.DETAIL -> true
             }
             if (!show) return@forEach
-            p.candidates.forEach { c ->
+            p.trajectories.forEach { c ->
                 if (c.points.isEmpty()) return@forEach
-                val isChosen = chosen == null || chosen == c.candidateId
+                val isChosen = chosen == null || chosen == c.mode
                 // 주행 모드: 위험 판단에 쓰인 후보만 표시해 화면을 단순하게 유지
                 if (mode == DisplayMode.DRIVING && chosen != null && !isChosen) return@forEach
                 val from = sceneVehicles.first { it.id == p.vehicleId }.center
                 trajectories += SceneTrajectory(
-                    vehicleId = p.vehicleId, candidateId = c.candidateId, maneuver = c.maneuver,
-                    points = listOf(from) + c.points.sortedBy { it.tOffsetMs }.map {
-                        val s = it.tOffsetMs / 1000f
-                        Point2(it.x - egoVx * s, it.y - egoVy * s)
-                    },
+                    vehicleId = p.vehicleId, mode = c.mode,
+                    points = listOf(from) + c.points.sortedBy { it.dtMs }.map { shift(Point2(it.x, it.y), it.dtMs) },
                     emphasized = isChosen && p.vehicleId in emphasized,
                     level = lv,
                 )

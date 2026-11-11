@@ -153,14 +153,14 @@ class ResolutionAndPerformanceTest {
     private fun synthetic(n: Int, tMs: Long): Pair<VehicleFrame, RiskFrame> {
         val t = tMs / 1000.0
         val vs = ArrayList<VehicleState>()
-        vs += VehicleState("ego", 0f, 0f, 0f, 27f, (PI / 2).toFloat(), 4.6f, 1.9f, 2)
+        vs += VehicleState("ego", 0f, 0f, 0f, 27f, (PI / 2).toFloat(), 4.6f, 1.9f, "L2")
         val risks = ArrayList<VehicleRisk>()
         for (i in 0 until n) {
             val lane = i % 3
             val y = -28f + (i / 3) * (110f / ((n + 2) / 3)) + (3 * sin(t + i)).toFloat()
-            vs += VehicleState("V$i", (lane - 1) * 3.5f, y, 0f, 27f, (PI / 2 + 0.05 * sin(t + i)).toFloat(), 4.6f, 1.9f, lane + 1)
+            vs += VehicleState("V$i", (lane - 1) * 3.5f, y, 0f, 27f, (PI / 2 + 0.05 * sin(t + i)).toFloat(), 4.6f, 1.9f, "L${lane + 1}")
             val lv = when (i % 7) { 0 -> RiskLevel.WATCH; 3 -> RiskLevel.WARNING; 5 -> RiskLevel.UNKNOWN; else -> RiskLevel.NORMAL }
-            risks += VehicleRisk("V$i", lv, listOf("TTC_LOW"))
+            risks += VehicleRisk("V$i", lv, listOf("FRONT_CLOSING"))
         }
         return VehicleFrame(tMs, "ego", vs) to RiskFrame(tMs, risks)
     }

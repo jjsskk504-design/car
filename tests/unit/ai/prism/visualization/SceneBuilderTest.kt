@@ -4,7 +4,8 @@ import ai.prism.visualization.model.Point2
 import ai.prism.visualization.model.PredictionFrame
 import ai.prism.visualization.model.RiskFrame
 import ai.prism.visualization.model.RiskLevel
-import ai.prism.visualization.model.TrajectoryCandidate
+import ai.prism.visualization.model.RiskZone
+import ai.prism.visualization.model.Trajectory
 import ai.prism.visualization.model.TrajectoryPoint
 import ai.prism.visualization.model.VehicleFrame
 import ai.prism.visualization.model.VehiclePrediction
@@ -25,11 +26,12 @@ import kotlin.math.PI
 
 class SceneBuilderTest {
     private val fwd = (PI / 2).toFloat()
-    private fun v(id: String, x: Float, y: Float) = VehicleState(id, x, y, 0f, 25f, fwd, 4.6f, 1.9f, 1)
+    private fun v(id: String, x: Float, y: Float) = VehicleState(id, x, y, 0f, 25f, fwd, 4.6f, 1.9f, "L2")
     private val vf = VehicleFrame(1000, "ego", listOf(v("ego", 0f, 0f), v("A", 3.5f, 15f), v("B", 0f, 30f), v("C", -3.5f, -10f)))
-    private fun risk(id: String, lv: RiskLevel, src: List<String> = emptyList(), cand: String? = null) =
-        VehicleRisk(id, lv, listOf("TTC_LOW"), src,
-            listOf(Point2(0f, 0f), Point2(1f, 0f), Point2(1f, 1f)), cand)
+    private fun risk(id: String, lv: RiskLevel, src: List<String> = emptyList(), mode: String? = null) =
+        VehicleRisk(id, lv, listOf("FRONT_CLOSING"), null,
+            listOf(RiskZone(1000, listOf(Point2(0f, 0f), Point2(1f, 0f), Point2(1f, 1f)))),
+            sourceVehicleIds = src, trajectoryMode = mode)
 
     @Test
     fun styleMapping_isNotColorOnly() {
@@ -112,29 +114,29 @@ class SceneBuilderTest {
 
     @Test
     fun drivingMode_onlyHighlightsRiskVehiclesAndChosenCandidate() {
-        fun cand(id: String, m: String) = TrajectoryCandidate(id, m, listOf(TrajectoryPoint(1000, 0f, 20f, null)))
+        fun traj(m: String) = Trajectory(m, null, listOf(TrajectoryPoint(1000, 0f, 20f, null)))
         val pf = PredictionFrame(1000, listOf(
-            VehiclePrediction("A", listOf(cand("A-keep", "KEEP_LANE"), cand("A-lcl", "LANE_CHANGE_LEFT"))),
-            VehiclePrediction("B", listOf(cand("B-keep", "KEEP_LANE"))),
+            VehiclePrediction("A", listOf(traj("lane_keep"), traj("lane_change_left"))),
+            VehiclePrediction("B", listOf(traj("lane_keep"))),
         ))
-        val rf = RiskFrame(1000, listOf(risk("A", RiskLevel.WATCH, cand = "A-lcl"), VehicleRisk("B", RiskLevel.NORMAL, emptyList())))
+        val rf = RiskFrame(1000, listOf(risk("A", RiskLevel.WATCH, mode = "lane_change_left"), VehicleRisk("B", RiskLevel.NORMAL, emptyList())))
         val drive = SceneBuilder.build(vf, pf, rf, DisplayMode.DRIVING)
-        assertEquals(listOf("A-lcl"), drive.trajectories.map { it.candidateId })
+        assertEquals(listOf("A" to "lane_change_left"), drive.trajectories.map { it.vehicleId to it.mode })
         assertTrue(drive.trajectories.single().emphasized)
         assertEquals(listOf("A"), drive.regions.map { it.vehicleId })
 
         val detail = SceneBuilder.build(vf, pf, rf, DisplayMode.DETAIL)
-        assertEquals(setOf("A-keep", "A-lcl", "B-keep"), detail.trajectories.map { it.candidateId }.toSet())
-        assertEquals(setOf("A-lcl"), detail.trajectories.filter { it.emphasized }.map { it.candidateId }.toSet())
+        assertEquals(setOf("A" to "lane_keep", "A" to "lane_change_left", "B" to "lane_keep"), detail.trajectories.map { it.vehicleId to it.mode }.toSet())
+        assertEquals(setOf("A" to "lane_change_left"), detail.trajectories.filter { it.emphasized }.map { it.vehicleId to it.mode }.toSet())
     }
 
     @Test
     fun danglingCandidateReference_stillShowsTrajectories() {
         val pf = PredictionFrame(1000, listOf(VehiclePrediction("A", listOf(
-            TrajectoryCandidate("A-keep", "KEEP_LANE", listOf(TrajectoryPoint(1000, 3.5f, 40f, null)))))))
-        val rf = RiskFrame(1000, listOf(risk("A", RiskLevel.WARNING, cand = "A-gone")))
+            Trajectory("lane_keep", null, listOf(TrajectoryPoint(1000, 3.5f, 40f, null)))))))
+        val rf = RiskFrame(1000, listOf(risk("A", RiskLevel.WARNING, mode = "not_in_prediction")))
         val s = SceneBuilder.build(vf, pf, rf, DisplayMode.DRIVING)
-        assertEquals(listOf("A-keep"), s.trajectories.map { it.candidateId })
+        assertEquals(listOf("lane_keep"), s.trajectories.map { it.mode })
     }
 
     @Test

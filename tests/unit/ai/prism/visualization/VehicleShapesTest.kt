@@ -20,8 +20,10 @@ class VehicleShapesTest {
     @Test
     fun classifyByDimensions() {
         assertEquals(VehicleBodyType.SEDAN, VehicleBodyType.classify(4.6f, 1.9f))
-        assertEquals(VehicleBodyType.SUV, VehicleBodyType.classify(4.9f, 2.0f))
-        assertEquals(VehicleBodyType.SUV, VehicleBodyType.classify(4.5f, 1.98f))
+        assertEquals(VehicleBodyType.SEDAN, VehicleBodyType.classify(5.0f, 2.0f))   // 팀 시뮬레이션 일반 승용차
+        assertEquals(VehicleBodyType.SUV, VehicleBodyType.classify(5.2f, 2.1f))
+        assertEquals(VehicleBodyType.SUV, VehicleBodyType.classify(4.9f, 2.06f))
+        assertEquals(VehicleBodyType.TRUCK, VehicleBodyType.classify(10f, 2.5f))   // 팀 시뮬레이션 화물차
         assertEquals(VehicleBodyType.TRUCK, VehicleBodyType.classify(12f, 2.5f))
         assertEquals(VehicleBodyType.TRUCK, VehicleBodyType.classify(7f, 2.3f))
     }
@@ -82,8 +84,8 @@ class VehicleShapesTest {
     @Test
     fun sceneBuilderAssignsBodyType() {
         val fwd = (PI / 2).toFloat()
-        fun v(id: String, l: Float, w: Float) = VehicleState(id, 0f, 10f, 0f, 20f, fwd, l, w, 1)
-        val vf = VehicleFrame(0, "ego", listOf(v("ego", 4.6f, 1.9f), v("S", 4.9f, 2.0f), v("T", 12f, 2.5f), v("C", 4.4f, 1.8f)))
+        fun v(id: String, l: Float, w: Float) = VehicleState(id, 0f, 10f, 0f, 20f, fwd, l, w, "L1")
+        val vf = VehicleFrame(0, "ego", listOf(v("ego", 4.6f, 1.9f), v("S", 5.2f, 2.1f), v("T", 12f, 2.5f), v("C", 4.4f, 1.8f)))
         val s = SceneBuilder.build(vf, null, RiskFrame(0, emptyList()))
         val types = s.vehicles.associate { it.id to it.bodyType }
         assertEquals(VehicleBodyType.SEDAN, types["ego"])

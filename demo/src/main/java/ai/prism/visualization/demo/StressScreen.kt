@@ -62,7 +62,7 @@ fun StressScreen(vehicleCount: Int) {
 fun syntheticFrames(n: Int, tMs: Long): Pair<VehicleFrame, RiskFrame> {
     val t = tMs / 1000.0
     val vehicles = ArrayList<VehicleState>()
-    vehicles += VehicleState("ego", 0f, 0f, 0f, 27f, (PI / 2).toFloat(), 4.6f, 1.9f, 2)
+    vehicles += VehicleState("ego", 0f, 0f, 0f, 27f, (PI / 2).toFloat(), 4.6f, 1.9f, "L2")
     val risks = ArrayList<VehicleRisk>()
     for (i in 0 until n) {
         val lane = i % 3
@@ -70,9 +70,9 @@ fun syntheticFrames(n: Int, tMs: Long): Pair<VehicleFrame, RiskFrame> {
         val y = baseY + (4 * sin(t * 0.8 + i)).toFloat()
         val x = (lane - 1) * 3.5f + (0.4 * sin(t * 1.3 + i * 0.7)).toFloat()
         val id = "V$i"
-        vehicles += VehicleState(id, x, y, 0.3f, 27f, (PI / 2 + 0.05 * sin(t + i)).toFloat(), 4.6f, 1.9f, lane + 1)
+        vehicles += VehicleState(id, x, y, 0.3f, 27f, (PI / 2 + 0.05 * sin(t + i)).toFloat(), 4.6f, 1.9f, "L${lane + 1}")
         val level = when (i % 7) { 0 -> RiskLevel.WATCH; 3 -> RiskLevel.WARNING; 5 -> RiskLevel.UNKNOWN; else -> RiskLevel.NORMAL }
-        risks += VehicleRisk(id, level, if (level == RiskLevel.NORMAL) emptyList() else listOf("TTC_LOW"))
+        risks += VehicleRisk(id, level, if (level == RiskLevel.NORMAL) emptyList() else listOf("FRONT_CLOSING"))
     }
     return VehicleFrame(tMs, "ego", vehicles) to RiskFrame(tMs, risks)
 }

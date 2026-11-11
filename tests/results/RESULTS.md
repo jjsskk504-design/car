@@ -7,15 +7,17 @@
 
 | 구분 | 테스트 수 | 성공 | 실패 |
 |---|---|---|---|
-| JVM 단위 — 라이브러리 (`tests/unit`) | 37 | 37 | 0 |
+| JVM 단위 — 라이브러리 (`tests/unit`) | 45 | 45 | 0 |
 | JVM 단위 — 데모 (`demo/src/test`) | 3 | 3 | 0 |
-| 계측(에뮬레이터) — Compose UI·해상도·성능 (`tests/android`) | 12 | 12 | 0 |
-| **합계** | **52** | **52** | **0** |
+| 계측(에뮬레이터) — Compose UI·해상도·성능 (`tests/android`) | 12 | 11 | 1 (환경) |
+| **합계** | **60** | **59** | **1 (환경)** |
+
+`TeamContractCompatibilityTest` 4개는 **팀 저장소 안에서만** 실행되고(다른 엔진의 실제 출력 파일을 읽기만 함), 독립 저장소에서는 건너뜁니다(skipped). 위 수치는 팀 저장소에서 실행한 결과입니다.
 
 실행 명령:
 
 ```bash
-./gradlew :testDebugUnitTest :demo:testDebugUnitTest   # 40개
+./gradlew :testDebugUnitTest :demo:testDebugUnitTest   # 48개
 ./gradlew :connectedDebugAndroidTest                    # 12개, 에뮬레이터 필요
 ```
 
@@ -30,16 +32,32 @@
 | GPU | 호스트 GPU(`-gpu host`, Intel Graphics). SwiftShader로는 측정하지 않음 |
 | 가상 CPU / RAM | 4 vCPU / 4 GB. Pleos 시스템 앱(drivingview, 지도 등)이 함께 실행됨 |
 
-## 2. 테스트별 결과 (52개, 모두 통과)
+## 2. 테스트별 결과 (60개)
 
-### JVM — 라이브러리 (37)
+### 2026-11-11 계약 반영 코드의 계측 테스트 기록
+
+| 실행 | 결과 | 비고 |
+|---|---|---|
+| 1회차(창 없는 에뮬레이터) | **11/12 통과**, `renderCost_scalesWithVehicleCount` 실패(50대 평균 69.5ms > 기준 50ms) | 에뮬레이터 과부하(Pleos 지도 앱 CPU 125%). 같은 시점에 **이전 버전(2c45c52)도 67.9~130.4ms로 똑같이 기준 초과** → 코드 회귀 아님. 새 버전은 66.5~131.7ms |
+| 2~4회차 | 무효 | 에뮬레이터 정지 또는 크래시(exit 139). "Compose 계층 없음", 상태 코드 -1 등 환경 오류 |
+
+- 이 렌더링 비용 테스트가 정상 환경에서 다시 통과하는지는 **아직 확인하지 못했습니다.**
+- 직전 커밋(278b1d3, 2026-11-10)에서는 계측 12/12가 통과했습니다.
+- 이번 변경에서 렌더링 경로는 위험 영역 투명도 계산 한 줄만 바뀌었습니다.
+
+
+### JVM — 라이브러리 (45)
 
 | 스위트 | 테스트 | 검증 내용 |
 |---|---|---|
-| ContractJsonTest | parsesVehicleFrameV1 | VehicleFrame v1 필드 파싱 |
+| ContractJsonTest | parsesVehicleFrameV1 | VehicleFrame v1(팀 스키마: `lane_id` 문자열, `schema_version`, `coordinate_system`) 파싱 |
+| | warnsOnWrongSchemaVersionOrCoordinateSystem | 지원하지 않는 버전·좌표계는 경고 |
+| | parsesPredictionFrameFromPredictionEngineExample | PredictionFrame 1.0(`trajectories`/`mode`/`confidence`/`dt_ms`) |
+| | parsesRiskFrameFromVehicleIntegrationSample | RiskFrame 1.0(`risk_objects`/`risk_level`/`reason_codes`/`ttc_s`/`risk_zones`) |
+| | riskExportWithoutExtensionsHasOnlyContractFields | 계약 필드만 내보내기 옵션 |
 | | skipsBrokenVehiclesInsteadOfCrashing | NaN·누락·ID 없음·객체 아님 → 해당 차량만 제외 + 경고 4건 |
 | | unknownRiskLevelBecomesUnknownNotWarning | 모르는 등급 문자열 → UNKNOWN |
-| | roundTripVehicleFrame | 직렬화 → 역직렬화 동일 |
+| | roundTripAllFrames | VehicleFrame·PredictionFrame 직렬화 → 역직렬화 동일 |
 | GeometryTest | egoIsAnchoredAndAxesPointRightAndUp | x=오른쪽, y=전방=화면 위, 자차 고정 위치, 역변환 |
 | | roadFitsAcrossLandscapeResolutions | 해상도 6종 × 패널 폭 2종 × 3/4/5차로에서 도로가 화면 안에 들어감 |
 | | egoInOuterLaneStillCentersRoad | 자차가 바깥 차선에 있어도 도로는 가운데 |
@@ -72,6 +90,10 @@
 | | shapesAreLeftRightSymmetric | 좌우 대칭(곡선 제어점 포함) |
 | | shapesDifferPerType | 차종별 도형이 서로 다름 |
 | | sceneBuilderAssignsBodyType | Scene 차량에 차종이 지정됨 |
+| TeamContractCompatibilityTest | vehicleIntegrationScenarios_parseWithoutWarnings_andRender | vehicle-integration 시나리오 6개(JSONL 3종)를 경고 0건으로 해석, WATCH·WARNING 183건이 화면 등급과 일치 |
+| | dropoutScenario_unknownIsNeverShownAsWarning | 팀 `dropout` 시나리오의 UNKNOWN이 경고색으로 표시되지 않음 |
+| | predictionEngineExample_parses | prediction-engine 예시 파싱, `dt_ms` 1~5000 |
+| | simulationEngineSamples_parse | simulation-engine VehicleFrame 샘플 전 줄 파싱 |
 | ExampleIoTest | writeExamples | `docs/examples/` 예제 입력·출력 생성 |
 
 ### JVM — 데모 (3)
@@ -182,6 +204,9 @@ GPU 합성이 아니라 CPU로 그린 비용이고, ART 최적화가 꺼진 상�
 | 루트 빌드에 넣으면 데모가 잘못된 프로젝트를 참조 (최종 점검에서 발견) | `project(":")`가 PRISM 루트를 가리킴 | `project(project.parent!!.path)`로 수정. 가짜 PRISM 루트 빌드에서 확인 |
 | 탑뷰 그래픽 1차 구현에서 50대 이상 FPS 38~49% 하락 | 차량마다 매 프레임 Path 12개 생성·그리기 | Path 캐시 → 패스 병합 → 스프라이트 캐시 순으로 최적화(3.4절). 최종은 이전보다 같거나 빠름 |
 | 차량 도형 대칭 테스트 실패 | 테스트가 곡선 끝점을 비교에서 빠뜨림(도형 문제 아님) | 곡선 끝점·제어점까지 비교하도록 테스트 수정 |
+| 팀 저장소 계약과 필드명 불일치(Push 직전 발견) | PredictionFrame·RiskFrame을 추정 필드명으로 구현 | 팀 스키마·Contracts.kt 기준으로 파서·Mock·테스트 수정, 팀 실제 출력으로 호환성 테스트 추가 |
+| `heading_rad` 왕복 변환 불일치 | 내보낼 때 소수 4자리로 반올림 | 6자리로 수정(팀 샘플과 같은 정밀도) |
+| 렌더링 비용 벤치마크가 기준(50ms) 초과(50대 63~125ms) | 에뮬레이터 과부하(Pleos 지도 앱 CPU 125%, drivingview 116%). 같은 시점에 이전 버전도 67~130ms로 같았음 → 코드 회귀 아님 | 지도 앱을 에뮬레이터에서 강제 종료한 뒤 재실행 |
 
 ## 5. 측정·검증하지 않은 것
 

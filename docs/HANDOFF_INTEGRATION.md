@@ -69,8 +69,10 @@ ReplayScreen(session = recordedSession, isVehicleStopped = parked)
 
 ```kotlin
 val vf = ContractJson.parseVehicleFrame(json).value
-val pf = ContractJson.parsePredictionFrame(JSONObject(json)).value
-val rf = ContractJson.parseRiskFrame(JSONObject(json)).value
+val pf = ContractJson.parsePredictionFrame(json).value
+val rf = ContractJson.parseRiskFrame(json).value
+// 시나리오 폴더(JSONL 3개) → 리플레이
+val session = ReplayJson.fromJsonl("chain_reaction", "연쇄 위험", vehicleJsonl, predictionJsonl, riskJsonl).session
 // .warnings 는 로그로 남기면 됩니다(깨진 차량은 그 차량만 건너뜀)
 ```
 
@@ -85,7 +87,7 @@ val rf = ContractJson.parseRiskFrame(JSONObject(json)).value
 
 ## 검증 상태
 
-- 테스트 52개 전부 통과: JVM 40개, Pleos_Connect 에뮬레이터 계측 12개
+- 테스트 60개 중 59개 통과: JVM 48/48(팀 실제 출력 호환성 4개 포함), 에뮬레이터 계측 11/12. 실패 1건은 렌더링 비용 벤치마크로, 에뮬레이터 과부하 때문입니다. 같은 시점에 이전 버전도 똑같이 실패했습니다(RESULTS.md 2절)
   - 계측 테스트에는 색 전환(픽셀 확인), 생명주기 복구, 가로 해상도 5종이 들어 있습니다.
 - FPS: 에뮬레이터 release 빌드, 모든 차량이 매 프레임 움직이는 조건에서 10~50대 약 60, 100대 약 57, 200대 약 46(창 모드 에뮬레이터). 탑뷰 그래픽 적용 후에도 이전 사각형 그래픽보다 같거나 빠름
   - 에뮬레이터 상태에 따라 편차가 있었습니다. 상세는 RESULTS.md 3절에 있습니다.
@@ -93,7 +95,8 @@ val rf = ContractJson.parseRiskFrame(JSONObject(json)).value
 
 ## 아직 안 된 것
 
-- PRISM 저장소 반영: 저장소 접근 권한이 없어 커밋과 PR이 아직 없습니다.
-- `contracts/` 스키마 대조: 받지 못해 필드 일부를 추정했습니다(계약 확인 요청 문서 참고).
-- 실제 엔진 출력·실차 하드웨어 검증
+- PR: `feature/visualization` 브랜치는 팀 저장소에 올렸지만 PR은 아직 만들지 않았습니다(gh 미로그인).
+- 공통 `contracts/`: 아직 없어서 각 엔진 폴더의 스키마·Contracts.kt를 기준으로 맞췄습니다. RiskFrame은 JSON Schema 파일이 없습니다(계약 확인 요청 문서 2절).
+- 실시간 엔진 연결: 팀 시나리오 파일(기록된 출력)로는 검증했지만, 앱에서 실시간 스트림으로 연결하지는 않았습니다.
+- 실차 하드웨어 검증
 - 곡선 도로

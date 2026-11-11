@@ -38,7 +38,7 @@ object RiskOverlay {
             DisplayLevel.WARNING -> 0.22f
             DisplayLevel.WATCH -> 0.16f
             else -> 0.10f
-        }
+        } * (1f - 0.5f * (r.dtMs.coerceIn(0L, 4000L) / 4000f)) // 먼 미래 영역일수록 옅게
         drawPath(path, Color(style.fill).copy(alpha = alpha))
         val dashed = r.level == DisplayLevel.UNKNOWN
         drawPath(path, Color(style.fill).copy(alpha = 0.6f), style = Stroke(px(1.5f),

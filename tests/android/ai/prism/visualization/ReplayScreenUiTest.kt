@@ -58,7 +58,7 @@ class ReplayScreenUiTest {
         }
         rule.runOnIdle { state.positionMs = 2_500 } // 경고 구간
         rule.onNodeWithText("차량 A · 경고").assertIsDisplayed()
-        rule.onNodeWithText("원인: 내 차로 진입 예상").assertIsDisplayed()
+        rule.onNodeWithText("원인: 예상 경로 겹침").assertIsDisplayed()
         rule.onNodeWithText("영향을 준 차량: B").assertIsDisplayed()
         rule.onNodeWithTag(ReplayTestTags.TIME).assertTextContains("2.5 / 5.0초")
         rule.runOnIdle { state.positionMs = 4_800 } // 정상 구간

@@ -71,7 +71,7 @@ class SampleScenarioTest {
         val highlighted = sc.flatMap { s -> s.vehicles.filter { !it.isEgo && it.level != DisplayLevel.NORMAL }.map { it.id } }.toSet()
         assertEquals(setOf("R1"), highlighted)
         val firstWatch = sc.first { it.levelOf("R1") == DisplayLevel.WATCH }
-        assertTrue(firstWatch.trajectories.any { it.vehicleId == "R1" && it.maneuver == "LANE_CHANGE_LEFT" && it.emphasized })
+        assertTrue(firstWatch.trajectories.any { it.vehicleId == "R1" && it.mode == "lane_change_left" && it.emphasized })
         assertTrue(sc.any { it.levelOf("R1") == DisplayLevel.WARNING })
     }
 

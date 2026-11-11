@@ -5,7 +5,8 @@ import ai.prism.visualization.model.PredictionFrame
 import ai.prism.visualization.model.RiskFrame
 import ai.prism.visualization.model.RiskLevel
 import ai.prism.visualization.model.RoadConfig
-import ai.prism.visualization.model.TrajectoryCandidate
+import ai.prism.visualization.model.RiskZone
+import ai.prism.visualization.model.Trajectory
 import ai.prism.visualization.model.TrajectoryPoint
 import ai.prism.visualization.model.VehicleFrame
 import ai.prism.visualization.model.VehiclePrediction
@@ -26,7 +27,9 @@ import kotlin.math.sign
  * 위험 등급은 실제 위험 판정 알고리즘이 아니라 시나리오별로 손으로 정한 규칙(스크립트)이며,
  * 어떤 성능도 의미하지 않는다.
  *
- * 출력은 PRISM 계약 좌표계(자차 기준 x=오른쪽, y=전방, m·m/s·rad·ms)로 변환된다.
+ * 출력은 팀 저장소 계약(VehicleFrame v1 / PredictionFrame 1.0 / RiskFrame 1.0)과 같은 필드·단위를 쓴다.
+ * 좌표: 자차 기준 x=오른쪽, y=전방(m·m/s·rad·ms). 예측 궤적·위험 영역은 기준 시점 자차 좌표계에 고정.
+ * 원인 코드·예측 mode 는 팀 샘플에서 쓰는 어휘(HARD_BRAKING, lane_keep 등)를 따른다.
  */
 object MockScenarios {
     const val DT_MS = 100L
@@ -44,8 +47,8 @@ object MockScenarios {
         val id: String, val truck: Boolean, val suv: Boolean, val X: Float, val Y: Float, val vX: Float, val vY: Float, val aY: Float,
         val lane: Int, val targetLane: Int, val visible: Boolean,
     ) {
-        val length get() = if (truck) 12f else if (suv) 4.9f else 4.6f
-        val width get() = if (truck) 2.5f else if (suv) 2.0f else 1.9f
+        val length get() = if (truck) 12f else if (suv) 5.2f else 4.6f
+        val width get() = if (truck) 2.5f else if (suv) 2.1f else 1.9f
     }
 
     private fun laneX(lane: Int) = (lane - ROAD.egoLaneIndex) * LANE_W
@@ -88,11 +91,11 @@ object MockScenarios {
     private fun toVehicle(w: WorldState, ego: WorldState) = VehicleState(
         id = w.id, x = w.X - ego.X, y = w.Y - ego.Y, vx = w.vX, vy = w.vY,
         headingRad = atan2(w.vY, w.vX), lengthM = w.length, widthM = w.width,
-        laneId = w.lane + 1, // 잠정: 왼쪽부터 1
+        laneId = "L${w.lane + 1}", // 팀 시뮬레이션과 같은 표기: 왼쪽부터 L1, L2, L3
     )
 
-    /** 등가속(최저속도 고려 X) 직선 + 선택적 차선 변경 예측. 좌표는 현재 자차 기준. */
-    private fun candidate(w: WorldState, ego: WorldState, id: String, maneuver: String, targetLane: Int?, accel: Float, horizonS: Float = 4f): TrajectoryCandidate {
+    /** 등가속(최저속도 고려 X) 직선 + 선택적 차선 변경 예측. 좌표는 기준 시점 자차 기준(지면 위치). */
+    private fun trajectory(w: WorldState, ego: WorldState, mode: String, targetLane: Int?, accel: Float, horizonS: Float = 4f): Trajectory {
         val pts = ArrayList<TrajectoryPoint>()
         var t = 0.5f
         while (t <= horizonS + 1e-3f) {
@@ -109,24 +112,15 @@ object MockScenarios {
                 atan2(vyNow, (X - prevX) / 0.1f))
             t += 0.5f
         }
-        return TrajectoryCandidate(id, maneuver, pts)
+        return Trajectory(mode, null, pts)
     }
 
-    /**
-     * 후보 궤적을 따라 차량 박스를 쓸어낸 볼록 껍질(위험 점유 영역).
-     * 자차 기준 상대 운동(자차 등속 가정)으로 표현한다 — README 이슈 #3 참고.
-     */
-    private fun sweptRegion(c: TrajectoryCandidate, start: Point2, length: Float, width: Float, egoVy: Float, uptoMs: Long = 3000): List<Point2> {
-        val pts = ArrayList<Point2>()
-        val centers = listOf(start) + c.points.filter { it.tOffsetMs <= uptoMs }
-            .map { Point2(it.x, it.y - egoVy * it.tOffsetMs / 1000f) }
-        centers.forEachIndexed { i, p ->
-            val grow = 1f + i * 0.08f
-            val hl = length / 2 * grow + 0.5f; val hw = width / 2 * grow + 0.2f
-            pts += listOf(Point2(p.x - hw, p.y - hl), Point2(p.x + hw, p.y - hl), Point2(p.x + hw, p.y + hl), Point2(p.x - hw, p.y + hl))
+    /** 궤적의 dt 1·2·3초 위치에 차량 크기(+불확실성 여유) 박스를 둔 risk_zones. 좌표는 기준 시점 자차 기준. */
+    private fun zonesAlong(c: Trajectory, length: Float, width: Float, uptoMs: Long = 3000): List<RiskZone> =
+        c.points.filter { it.dtMs % 1000L == 0L && it.dtMs <= uptoMs }.map { p ->
+            val grow = 0.3f + p.dtMs / 1000f * 0.4f
+            RiskZone(p.dtMs, boxRegion(Point2(p.x, p.y), length, width, grow))
         }
-        return convexHull(pts)
-    }
 
     private fun boxRegion(center: Point2, length: Float, width: Float, grow: Float): List<Point2> {
         val hl = length / 2 + grow; val hw = width / 2 + grow * 0.5f
@@ -156,13 +150,14 @@ object MockScenarios {
 
     private data class RiskSpec(
         val level: RiskLevel, val causes: List<String>, val sources: List<String> = emptyList(),
-        val candidateId: String? = null, val region: List<Point2> = emptyList(),
+        /** 위험 판단에 쓰인 궤적 mode(선택 필드 trajectory_mode) */
+        val mode: String? = null, val zones: List<RiskZone>? = null, val ttc: Float? = null,
     )
 
     private fun build(
         id: String, title: String, description: String, specs: List<Spec>, durationS: Float,
-        extraCandidates: (Ctx, WorldState) -> List<Pair<TrajectoryCandidate, Boolean>> = { _, _ -> emptyList() },
-        risk: (Ctx, WorldState, List<TrajectoryCandidate>) -> RiskSpec?,
+        extraTrajectories: (Ctx, WorldState) -> List<Trajectory> = { _, _ -> emptyList() },
+        risk: (Ctx, WorldState) -> RiskSpec?,
     ): ReplaySession {
         val world = simulate(specs, durationS)
         val frames = world.mapIndexed { i, states ->
@@ -174,21 +169,21 @@ object MockScenarios {
             val preds = ArrayList<VehiclePrediction>()
             val risks = ArrayList<VehicleRisk>()
             states.filter { it.id != "ego" }.forEach { w ->
-                val keep = candidate(w, ego, "${w.id}-keep", "KEEP_LANE", null, w.aY)
-                val extras = extraCandidates(ctx, w).map { it.first }
-                val cands = listOf(keep) + extras
-                if (w.visible) preds += VehiclePrediction(w.id, cands)
-                val r = risk(ctx, w, cands) ?: RiskSpec(RiskLevel.NORMAL, emptyList())
-                val region = when {
-                    r.region.isNotEmpty() -> r.region
+                val keep = trajectory(w, ego, if (w.aY < -1f) "braking" else "lane_keep", null, w.aY)
+                val trajs = listOf(keep) + extraTrajectories(ctx, w)
+                if (w.visible) preds += VehiclePrediction(w.id, trajs)
+                val r = risk(ctx, w) ?: RiskSpec(RiskLevel.NORMAL, emptyList())
+                val used = trajs.firstOrNull { it.mode == r.mode } ?: keep
+                val zones = when {
+                    r.zones != null -> r.zones
                     r.level == RiskLevel.NORMAL -> emptyList()
-                    else -> {
-                        val c = cands.firstOrNull { it.candidateId == r.candidateId } ?: keep
-                        sweptRegion(c, Point2(w.X - ego.X, w.Y - ego.Y), w.length, w.width, ego.vY)
-                    }
+                    else -> zonesAlong(used, w.length, w.width)
                 }
-                risks += VehicleRisk(w.id, r.level, r.causes, r.sources, region,
-                    r.candidateId ?: if (r.level != RiskLevel.NORMAL) keep.candidateId else null)
+                risks += VehicleRisk(
+                    vehicleId = w.id, level = r.level, reasonCodes = r.causes, ttcS = r.ttc, riskZones = zones,
+                    sourceVehicleIds = r.sources,
+                    trajectoryMode = if (r.level != RiskLevel.NORMAL) used.mode else null,
+                )
             }
             ReplayFrame(vf, PredictionFrame(ts, preds), RiskFrame(ts, risks))
         }
@@ -207,7 +202,7 @@ object MockScenarios {
             Spec("T1", true, 60f, 2, 25f, listOf(Cmd(3f, accel = -0.5f, minSpeed = 24f))),
             Spec("B1", false, -30f, 1, 27f, suv = true),
         ), 8f,
-    ) { _, _, _ -> null }
+    ) { _, _ -> null }
 
     fun frontBrake() = build(
         "front_brake", "전방 급감속", "앞 차량이 급감속하면 앞 차량과 내 뒤 차량의 위험이 차례로 변합니다.",
@@ -218,21 +213,21 @@ object MockScenarios {
             Spec("L1", false, 5f, 0, 26f, suv = true),
             Spec("R1", false, -12f, 2, 26f),
         ), 9f,
-    ) { c, w, _ ->
+    ) { c, w ->
         when (w.id) {
             "F1" -> {
                 val ttc = c.ttcAhead(w)
                 when {
-                    ttc != null && ttc < 2.5f -> RiskSpec(RiskLevel.WARNING, listOf("LEAD_HARD_BRAKE", "TTC_LOW"))
-                    w.aY < -3f || (ttc != null && ttc < 5f) -> RiskSpec(RiskLevel.WATCH, listOf("LEAD_HARD_BRAKE"))
+                    ttc != null && ttc < 2.5f -> RiskSpec(RiskLevel.WARNING, listOf("HARD_BRAKING", "FRONT_CLOSING"), ttc = ttc)
+                    w.aY < -3f || (ttc != null && ttc < 5f) -> RiskSpec(RiskLevel.WATCH, listOf("HARD_BRAKING"), ttc = ttc)
                     else -> null
                 }
             }
             "B1" -> {
                 val ttc = c.ttcBehind(w)
                 when {
-                    ttc != null && ttc < 2f -> RiskSpec(RiskLevel.WARNING, listOf("REAR_CLOSING", "TTC_LOW"))
-                    ttc != null && ttc < 4.5f -> RiskSpec(RiskLevel.WATCH, listOf("REAR_CLOSING"), listOf("F1"))
+                    ttc != null && ttc < 2f -> RiskSpec(RiskLevel.WARNING, listOf("REAR_CLOSING"), ttc = ttc)
+                    ttc != null && ttc < 4.5f -> RiskSpec(RiskLevel.WATCH, listOf("REAR_CLOSING", "CHAIN_DECEL"), listOf("F1"), ttc = ttc)
                     else -> null
                 }
             }
@@ -240,19 +235,22 @@ object MockScenarios {
         }
     }
 
-    private fun cutInRisk(c: Ctx, w: WorldState, lcId: String, sources: List<String> = emptyList()): RiskSpec? {
+    private const val LC_LEFT = "lane_change_left"
+
+    private fun cutInRisk(c: Ctx, w: WorldState, sources: List<String> = emptyList()): RiskSpec? {
         val movingToEgo = w.targetLane != w.lane || abs(w.vX) > 0.2f
         val headway = c.gapAhead(w) / c.ego.vY
         return when {
-            c.inEgoLane(w) && w.Y > c.ego.Y && headway < 0.55f -> RiskSpec(RiskLevel.WARNING, listOf("LANE_INTRUSION", "HEADWAY_SHORT"), sources, lcId)
-            movingToEgo && w.targetLane == ROAD.egoLaneIndex -> RiskSpec(RiskLevel.WATCH, listOf("PREDICTED_CUT_IN"), sources, lcId)
-            c.inEgoLane(w) && w.Y > c.ego.Y && headway < 0.8f -> RiskSpec(RiskLevel.WATCH, listOf("HEADWAY_SHORT"), sources)
+            c.inEgoLane(w) && w.Y > c.ego.Y && headway < 0.55f ->
+                RiskSpec(RiskLevel.WARNING, listOf("LANE_CHANGE_INTRUSION", "FRONT_CLOSING"), sources, LC_LEFT, ttc = c.ttcAhead(w))
+            movingToEgo && w.targetLane == ROAD.egoLaneIndex -> RiskSpec(RiskLevel.WATCH, listOf("PATH_OVERLAP"), sources, LC_LEFT)
+            c.inEgoLane(w) && w.Y > c.ego.Y && headway < 0.8f -> RiskSpec(RiskLevel.WATCH, listOf("FRONT_CLOSING"), sources, ttc = c.ttcAhead(w))
             else -> null
         }
     }
 
-    private fun lcCandidate(c: Ctx, w: WorldState, accel: Float = 0f) =
-        candidate(w, c.ego, "${w.id}-lcl", "LANE_CHANGE_LEFT", ROAD.egoLaneIndex, accel)
+    private fun laneChangeLeft(c: Ctx, w: WorldState, accel: Float = 0f) =
+        trajectory(w, c.ego, LC_LEFT, ROAD.egoLaneIndex, accel)
 
     fun laneChange() = build(
         "lane_change", "차선 변경", "우측 차량이 내 차로로 들어옵니다. 진입이 예상되는 순간부터 해당 차량만 강조됩니다.",
@@ -263,8 +261,8 @@ object MockScenarios {
             Spec("L1", false, -6f, 0, 26.5f),
             Spec("R2", false, -25f, 2, 26f),
         ), 9f,
-        extraCandidates = { c, w -> if (w.id == "R1" && w.lane == 2) listOf(lcCandidate(c, w) to true) else emptyList() },
-    ) { c, w, _ -> if (w.id == "R1") cutInRisk(c, w, "R1-lcl") else null }
+        extraTrajectories = { c, w -> if (w.id == "R1" && w.lane == 2) listOf(laneChangeLeft(c, w)) else emptyList() },
+    ) { c, w -> if (w.id == "R1") cutInRisk(c, w) else null }
 
     fun chain() = build(
         "chain", "연쇄 위험", "우측 차로 화물차가 급감속하자 그 뒤 차량이 내 차로로 피하며, 내 뒤 차량까지 위험이 이어집니다.",
@@ -276,24 +274,24 @@ object MockScenarios {
             Spec("L1", false, -8f, 0, 28f, suv = true),
             Spec("B1", false, -20f, 1, 27f, listOf(Cmd(5.6f, accel = -4f, minSpeed = 15f))),
         ), 9f,
-        extraCandidates = { c, w ->
+        extraTrajectories = { c, w ->
             val t1 = c.byId.getValue("T1")
-            if (w.id == "R1" && w.lane == 2 && t1.aY < -2f) listOf(lcCandidate(c, w, -3f) to true) else emptyList()
+            if (w.id == "R1" && w.lane == 2 && t1.aY < -2f) listOf(laneChangeLeft(c, w, -3f)) else emptyList()
         },
-    ) { c, w, _ ->
+    ) { c, w ->
         val t1 = c.byId.getValue("T1")
         when (w.id) {
-            "T1" -> if (t1.aY < -2f) RiskSpec(RiskLevel.WATCH, listOf("LEAD_HARD_BRAKE")) else null
+            "T1" -> if (t1.aY < -2f) RiskSpec(RiskLevel.WATCH, listOf("HARD_BRAKING")) else null
             "R1" -> {
                 if (w.lane == 2 && w.targetLane == 2 && t1.aY < -2f && c.t >= 1.2f)
-                    RiskSpec(RiskLevel.WATCH, listOf("CHAIN_DECELERATION", "PREDICTED_CUT_IN"), listOf("T1"), "R1-lcl")
-                else cutInRisk(c, w, "R1-lcl", if (c.t < 6.5f) listOf("T1") else emptyList())
+                    RiskSpec(RiskLevel.WATCH, listOf("CHAIN_DECEL", "PATH_OVERLAP"), listOf("T1"), LC_LEFT)
+                else cutInRisk(c, w, if (c.t < 6.5f) listOf("T1") else emptyList())
             }
             "B1" -> {
                 val ttc = c.ttcBehind(w)
                 when {
-                    ttc != null && ttc < 2f -> RiskSpec(RiskLevel.WARNING, listOf("REAR_CLOSING", "TTC_LOW"), listOf("R1"))
-                    ttc != null && ttc < 4.5f -> RiskSpec(RiskLevel.WATCH, listOf("REAR_CLOSING", "CHAIN_DECELERATION"), listOf("R1"))
+                    ttc != null && ttc < 2f -> RiskSpec(RiskLevel.WARNING, listOf("REAR_CLOSING"), listOf("R1"), ttc = ttc)
+                    ttc != null && ttc < 4.5f -> RiskSpec(RiskLevel.WATCH, listOf("REAR_CLOSING", "CHAIN_DECEL"), listOf("R1"), ttc = ttc)
                     else -> null
                 }
             }
@@ -313,21 +311,22 @@ object MockScenarios {
                 Spec("F1", false, 60f, 1, 26f),
                 Spec("L1", false, -6f, 0, 26.5f, suv = true),
             ), 8f,
-            extraCandidates = { c, w -> if (w.id == "R1" && w.lane == 2) listOf(lcCandidate(c, w) to true) else emptyList() },
-        ) { c, w, _ ->
+            extraTrajectories = { c, w -> if (w.id == "R1" && w.lane == 2) listOf(laneChangeLeft(c, w)) else emptyList() },
+        ) { c, w ->
             if (w.id != "R1") return@build null
             if (w.visible) {
                 lastSeen = w; lastSeenT = c.t
-                return@build cutInRisk(c, w, "R1-lcl")
+                return@build cutInRisk(c, w)
             }
             val ls = lastSeen ?: return@build null
             val dt = c.t - lastSeenT
             // 누락 직후 0.2초간 Mock 위험 엔진은 직전 등급(WATCH)을 유지해 보낸다 →
             // 시각화 엔진이 위치 없는 차량을 UNKNOWN 으로 낮추는지 확인하기 위한 데이터.
+            // 위치 추정 영역은 현재 시점(dt_ms = 0) risk_zone 으로 보낸다.
             val center = Point2(ls.X + ls.vX * dt - c.ego.X, ls.Y + ls.vY * dt - c.ego.Y)
-            val region = boxRegion(center, ls.length, ls.width, 0.8f + dt * 2.5f)
-            if (dt <= 0.2f) RiskSpec(RiskLevel.WATCH, listOf("PREDICTED_CUT_IN"), region = region, candidateId = "R1-lcl")
-            else RiskSpec(RiskLevel.UNKNOWN, listOf("SENSOR_DROPOUT"), region = region)
+            val zone = listOf(RiskZone(0, boxRegion(center, ls.length, ls.width, 0.8f + dt * 2.5f)))
+            if (dt <= 0.2f) RiskSpec(RiskLevel.WATCH, listOf("PATH_OVERLAP"), zones = zone)
+            else RiskSpec(RiskLevel.UNKNOWN, listOf("SENSOR_DROPOUT"), zones = zone)
         }
     }
 

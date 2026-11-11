@@ -5,7 +5,8 @@ import ai.prism.visualization.model.PredictionFrame
 import ai.prism.visualization.model.RiskFrame
 import ai.prism.visualization.model.RiskLevel
 import ai.prism.visualization.model.RoadConfig
-import ai.prism.visualization.model.TrajectoryCandidate
+import ai.prism.visualization.model.RiskZone
+import ai.prism.visualization.model.Trajectory
 import ai.prism.visualization.model.TrajectoryPoint
 import ai.prism.visualization.model.VehicleFrame
 import ai.prism.visualization.model.VehiclePrediction
@@ -21,7 +22,7 @@ import kotlin.math.PI
 /** 계측 테스트용 합성 데이터(데모 모듈에 의존하지 않음). */
 object TestData {
     private val fwd = (PI / 2).toFloat()
-    fun v(id: String, x: Float, y: Float, lane: Int = 2) = VehicleState(id, x, y, 0f, 25f, fwd, 4.6f, 1.9f, lane)
+    fun v(id: String, x: Float, y: Float, lane: Int = 2) = VehicleState(id, x, y, 0f, 25f, fwd, 4.6f, 1.9f, "L$lane")
 
     fun vehicleFrame(ts: Long = 1000, aY: Float = 15f) = VehicleFrame(
         ts, "ego",
@@ -31,10 +32,15 @@ object TestData {
     fun riskFrame(ts: Long = 1000, a: RiskLevel, sourceB: Boolean = false) = RiskFrame(
         ts,
         listOf(
-            VehicleRisk("A", a, if (a == RiskLevel.NORMAL) emptyList() else listOf("PREDICTED_CUT_IN"),
-                if (sourceB) listOf("B") else emptyList(),
-                if (a == RiskLevel.NORMAL) emptyList() else listOf(Point2(0.5f, 12f), Point2(4.5f, 12f), Point2(2f, 26f), Point2(-1f, 24f)),
-                "A-lcl"),
+            VehicleRisk(
+                vehicleId = "A", level = a,
+                reasonCodes = if (a == RiskLevel.NORMAL) emptyList() else listOf("PATH_OVERLAP"),
+                // dt_ms = 0: 현재 시점 영역(자차 상대 운동 변환 없이 그대로 표시)
+                riskZones = if (a == RiskLevel.NORMAL) emptyList() else
+                    listOf(RiskZone(0, listOf(Point2(0.5f, 12f), Point2(4.5f, 12f), Point2(2f, 26f), Point2(-1f, 24f)))),
+                sourceVehicleIds = if (sourceB) listOf("B") else emptyList(),
+                trajectoryMode = "lane_change_left",
+            ),
             VehicleRisk("B", RiskLevel.NORMAL, emptyList()),
         ),
     )
@@ -42,8 +48,8 @@ object TestData {
     fun predictionFrame(ts: Long = 1000, aY: Float = 15f) = PredictionFrame(
         ts,
         listOf(VehiclePrediction("A", listOf(
-            TrajectoryCandidate("A-keep", "KEEP_LANE", (1..8).map { TrajectoryPoint(it * 500L, 3.5f, aY + it * 0.5f * 1.5f, fwd) }),
-            TrajectoryCandidate("A-lcl", "LANE_CHANGE_LEFT", (1..8).map {
+            Trajectory("lane_keep", null, (1..8).map { TrajectoryPoint(it * 500L, 3.5f, aY + it * 0.5f * 1.5f, fwd) }),
+            Trajectory("lane_change_left", null, (1..8).map {
                 TrajectoryPoint(it * 500L, (3.5f - it * 0.6f).coerceAtLeast(0f), aY + it * 0.5f * 1.5f, fwd)
             }),
         ))),

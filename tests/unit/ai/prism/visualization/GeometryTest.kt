@@ -64,7 +64,7 @@ class GeometryTest {
 
     @Test
     fun interpolatesById_andDoesNotInventVehicles() {
-        fun v(id: String, y: Float, h: Float = forward) = VehicleState(id, 0f, y, 0f, 20f, h, 4.6f, 1.9f, 1)
+        fun v(id: String, y: Float, h: Float = forward) = VehicleState(id, 0f, y, 0f, 20f, h, 4.6f, 1.9f, "L1")
         val a = VehicleFrame(0, "ego", listOf(v("ego", 0f), v("A", 10f), v("gone", 30f)))
         val b = VehicleFrame(100, "ego", listOf(v("ego", 0f), v("A", 12f), v("new", -20f)))
         val m = FrameInterpolator.lerp(a, b, 0.25f)

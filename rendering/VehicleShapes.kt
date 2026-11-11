@@ -15,11 +15,12 @@ enum class VehicleBodyType {
     companion object {
         /**
          * VehicleFrame v1 에 차종 필드가 없어 치수로 추정한다(계약 확인 요청 문서의 vehicle_class 제안 참고).
-         * 길이 7 m 이상 = 대형 화물차, 길이 4.75 m 이상 또는 폭 1.95 m 이상 = SUV, 나머지 = 승용차.
+         * 길이 7 m 이상 = 대형 화물차, 길이 5.15 m 이상 또는 폭 2.05 m 이상 = SUV, 나머지 = 승용차.
+         * (팀 시뮬레이션 엔진의 일반 승용차가 5.0 × 2.0 m 이므로 그보다 큰 차량만 SUV 로 본다)
          */
         fun classify(lengthM: Float, widthM: Float): VehicleBodyType = when {
             lengthM >= 7f -> TRUCK
-            lengthM >= 4.75f || widthM >= 1.95f -> SUV
+            lengthM >= 5.15f || widthM >= 2.05f -> SUV
             else -> SEDAN
         }
     }

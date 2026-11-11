@@ -24,7 +24,7 @@ visualization-engine/
 ├── replay/      # ReplaySession / ReplayJson / ReplayScreen / RiskTimeline
 ├── demo/        # 독립 실행 데모 앱 + Mock 시나리오 생성기 + 샘플 JSON(assets/scenarios)
 ├── tests/
-│   ├── unit/        # JVM 단위 테스트(37개, 데모 모듈 3개 별도)
+│   ├── unit/        # JVM 단위 테스트(45개, 데모 모듈 3개 별도. 팀 호환성 4개는 팀 저장소 안에서만 실행)
 │   ├── android/     # 계측 테스트: Compose UI, 해상도, 생명주기, 렌더링 비용(12개)
 │   └── results/     # 테스트·FPS 측정 결과
 ├── docs/        # 스크린샷, 시연 영상, 예제 입력·출력
@@ -92,7 +92,8 @@ ReplayScreen(
 | API | 용도 |
 |---|---|
 | `ContractJson.parseVehicleFrame(String \| JSONObject)` | VehicleFrame JSON → 모델. 깨진 차량은 건너뛰고 `ParseResult.warnings`로 보고 |
-| `ContractJson.parsePredictionFrame(JSONObject)`, `ContractJson.parseRiskFrame(JSONObject)` | 잠정 계약 JSON → 모델. **문자열이면 `JSONObject(json)`으로 감싸서** 호출 |
+| `ContractJson.parsePredictionFrame(String | JSONObject)`, `ContractJson.parseRiskFrame(String | JSONObject)` | PredictionFrame·RiskFrame JSON → 모델 |
+| `ReplayJson.fromJsonl(id, title, vehicleJsonl, predictionJsonl, riskJsonl)` | 팀 시나리오 형식(프레임별 JSONL 3개)을 리플레이 세션으로 묶기 |
 | `ContractJson.toJson(VehicleFrame \| PredictionFrame \| RiskFrame \| RoadConfig)` | 모델 → `JSONObject` |
 | `ReplayJson.parse(String).session`, `ReplayJson.toJson(ReplaySession): String` | 리플레이 파일(이 모듈 자체 포맷, `prism.visualization.replay/0.1`) |
 | `SceneOptions(trajectoryReference, staleAfterMs = 500, riskSyncToleranceMs = 300, maxEmphasizedInDriving = 3)` | 표시 규칙 조정. `RadarConfig(sceneOptions = …)`로 전달 |
@@ -135,7 +136,8 @@ risk-engine        ──RiskFrame──────┘
 2. **데이터 공급**: 통합 측이 세 프레임을 `StateFlow`로 모아 `collectAsState()`로 넘기면 됩니다.
    이 모듈은 스레드·구독을 소유하지 않습니다. 메인 스레드에서는 그리기만 합니다.
 3. **JSON으로 받는 경우**
-   - 문자열 JSON은 `ContractJson.parseVehicleFrame(json)`, `ContractJson.parsePredictionFrame(JSONObject(json))`, `ContractJson.parseRiskFrame(JSONObject(json))`로 바꿉니다.
+   - 문자열 JSON은 `ContractJson.parseVehicleFrame(json)`, `ContractJson.parsePredictionFrame(json)`, `ContractJson.parseRiskFrame(json)`로 바꿉니다.
+   - 시나리오 폴더(`vehicle_frames.jsonl` 등)는 `ReplayJson.fromJsonl(...)`로 바로 리플레이할 수 있습니다.
    - `.value`가 모델이고, `.warnings`는 로그로 남기면 됩니다.
    - Kotlin 객체로 직접 받는다면 `model/Contracts.kt`의 데이터 클래스를 쓰면 됩니다.
 4. **정차 여부**: 통합 측이 Pleos Vehicle SDK(기어·속도)로 판단해 `isVehicleStopped`와 `mode`에 넘깁니다.
@@ -144,22 +146,22 @@ risk-engine        ──RiskFrame──────┘
 
 ---
 
-## 5. 데이터 계약 — 가정과 확인이 필요한 이슈
+## 5. 데이터 계약
 
-PRISM 저장소의 JSON Schema를 아직 받지 못해 **팀 공지의 필드 목록을 기준으로 구현**했습니다.
-스키마가 다르면 공통 계약은 바꾸지 않고, `model/ContractJson.kt`만 맞추거나 이슈로 보고합니다.
-필드별로 공지에 있는 것, 추정한 것, 확인이 필요한 것을 나눈 목록은 [docs/CONTRACT_CONFIRMATION_REQUEST.md](docs/CONTRACT_CONFIRMATION_REQUEST.md)에 있습니다.
+팀 저장소(qwon4466/PRISM)의 실제 계약에 맞춰 구현했습니다(2026-11-11 확인).
 
-| # | 이슈 | 현재 가정 | 요청 |
-|---|---|---|---|
-| 1 | PredictionFrame·RiskFrame 필드명 미확정 | `predictions[].candidates[].points[] {t_offset_ms,x,y,heading_rad}`, `risks[] {vehicle_id, level, cause_codes[], source_vehicle_ids[], risk_region[{x,y}], trajectory_candidate_id, message}` | 스키마 확정 시 공유 |
-| 2 | `heading_rad` 기준축 | 자차 좌표계에서 +x(오른쪽) 기준 반시계, 전방 = π/2 | 0 = 전방인지 확인 |
-| 3 | 예측 궤적·위험 영역의 좌표 기준 | 예측 시점 자차 기준 **지면 좌표**로 받고, 화면에는 자차 이동량을 빼서 **상대 운동**으로 표시(`TrajectoryReference.RELATIVE_TO_EGO`). 위험 영역은 받은 좌표 그대로 그림 | 위험 영역이 지면 기준인지 상대 기준인지 확인 |
-| 4 | `vx, vy`가 지면 속도인지 자차 상대 속도인지 | 지면 속도를 자차 축으로 표현한 값 | 확인 |
-| 5 | 자차가 `vehicles[]`에 포함되는지 | 포함(`ego_id`로 식별). 없으면 원점에 기본 자차를 그림 | 확인 |
-| 6 | `lane_id` 번호 규칙, 차선 형상 | 표시용으로만 사용. 차선 수·폭·자차 차선은 `RoadConfig`로 받음(직선 도로 가정) | 차선 형상이 계약에 필요한지 논의 |
-| 7 | 원인 코드 목록 | `CauseCatalog`에 잠정 코드 9개(`LEAD_HARD_BRAKE`, `PREDICTED_CUT_IN`, `CHAIN_DECELERATION`, `SENSOR_DROPOUT` 등). 모르는 코드는 원문 표시 | 위험 판정 엔진과 목록 합의 |
-| 8 | 연쇄 위험 표현 | `source_vehicle_ids`(원인 차량)가 있으면 원인 → 위험 차량 화살표를 그림 | 계약에 포함 여부 확인 |
+| 프레임 | 기준 파일(팀 저장소) | 시각화 엔진이 읽는 필드 |
+|---|---|---|
+| VehicleFrame v1 | `simulation-engine/schema/vehicle_frame.v1.schema.json` | `schema_version`, `timestamp_ms`, `coordinate_system`(= `ego_local_m`), `ego_id`, `vehicles[] {id, x, y, vx, vy, heading_rad, length_m, width_m, lane_id(문자열)}` |
+| PredictionFrame 1.0 | `prediction-engine/src/prism_predict/schema/prediction_frame.schema.json` | `predictions[] {vehicle_id, trajectories[] {mode, confidence, points[] {dt_ms, x, y, heading_rad}}}` |
+| RiskFrame 1.0 | `vehicle-integration/replay/.../Contracts.kt` (JSON Schema 파일 없음) | `risk_objects[] {vehicle_id, risk_level, reason_codes[], ttc_s, risk_zones[] {dt_ms, polygon[]}}` |
+
+- 좌표·각도: x = 오른쪽, y = 전방, 전방 주행 heading = π/2, `vx`/`vy` = 지면 속도. 팀 샘플과 일치하는 것을 확인했습니다.
+- 예측 궤적·위험 영역: 기준 시점의 자차 좌표계에 고정된 값으로 받습니다. 화면에는 `dt_ms` × 자차 속도만큼 빼서 **자차 대비 상대 운동**으로 그립니다(`TrajectoryReference.RELATIVE_TO_EGO`).
+- 원인 코드: 팀 샘플이 쓰는 7개(`HARD_BRAKING`, `FRONT_CLOSING`, `REAR_CLOSING`, `CHAIN_DECEL`, `LANE_CHANGE_INTRUSION`, `PATH_OVERLAP`, `SENSOR_DROPOUT`)를 한국어 문구로 표시합니다. 모르는 코드는 원문 그대로 표시합니다.
+- 계약에 없는 **선택 필드(제안)**: `source_vehicle_ids`(연쇄 위험 화살표), `trajectory_mode`(위험 판단에 쓰인 궤적 강조), `message`, `vehicle_class`. 없으면 해당 표시만 생략하고 오류는 내지 않습니다.
+- 호환성 검증: 팀 저장소 안에서 `TeamContractCompatibilityTest`가 vehicle-integration의 시나리오 6개, prediction-engine 예시, simulation-engine 샘플을 읽기만 해서 경고 0건으로 해석되는지 확인합니다.
+- 남은 확인 사항은 [docs/CONTRACT_CONFIRMATION_REQUEST.md](docs/CONTRACT_CONFIRMATION_REQUEST.md)에 정리했습니다.
 
 ---
 
@@ -200,9 +202,9 @@ PRISM 저장소의 JSON Schema를 아직 받지 못해 **팀 공지의 필드 �
 
 | 구분 | 내용 | 결과 |
 |---|---|---|
-| JVM 단위(라이브러리 37 + 데모 3 = 40) | 차량 도형·차종 분류, 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 통과 |
-| Compose UI 계측(12) | 픽셀 색으로 NORMAL→WATCH→WARNING→UNKNOWN 전환 검증, 데이터 누락 안내, 지연 시 경고 억제, 모드별 탭, 재생/일시정지, 원인 패널, 주행 중 잠금, **상태 복원(생명주기)**, 가로 해상도 5종, 렌더링 비용 | 12/12 통과 |
-| **합계** | | **52/52 통과** |
+| JVM 단위(라이브러리 45 + 데모 3 = 48) | **팀 실제 출력 호환성**, 차량 도형·차종 분류, 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 통과 |
+| Compose UI 계측(12) | 픽셀 색으로 NORMAL→WATCH→WARNING→UNKNOWN 전환 검증, 데이터 누락 안내, 지연 시 경고 억제, 모드별 탭, 재생/일시정지, 원인 패널, 주행 중 잠금, **상태 복원(생명주기)**, 가로 해상도 5종, 렌더링 비용 | 11/12 통과 |
+| **합계** | | **59/60 통과** (렌더링 비용 벤치마크 1건은 에뮬레이터 과부하로 실패, RESULTS.md 2절) |
 
 **실제 화면 FPS**: 데모 release 빌드를 Pleos_Connect AVD(호스트 GPU, 60 Hz)에서 쟀습니다.
 - 조건: 상세 모드에서 모든 차량이 매 프레임 움직이고, 워밍업 구간은 뺀 중앙값입니다.

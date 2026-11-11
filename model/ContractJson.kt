@@ -4,14 +4,22 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /**
- * 계약 JSON <-> Kotlin 모델 변환.
+ * 계약 JSON <-> Kotlin 모델 변환 (팀 저장소 계약 필드명 기준, Contracts.kt 머리말 참고).
  *
- * 원칙: 잘못된 항목 하나 때문에 화면 전체가 죽지 않도록, 차량 단위로 건너뛰고
+ * 원칙: 잘못된 항목 하나 때문에 화면 전체가 죽지 않도록, 항목 단위로 건너뛰고
  * [ParseResult.warnings] 에 기록한다. 최상위 구조가 깨진 경우에만 예외를 던진다.
+ * 알 수 없는 필드는 무시한다(다른 엔진의 확장 필드 허용).
  */
 object ContractJson {
 
     data class ParseResult<T>(val value: T, val warnings: List<String>)
+
+    private fun checkVersion(o: JSONObject, warnings: MutableList<String>): String {
+        val v = o.optString("schema_version", "")
+        if (v.isEmpty()) warnings += "schema_version 없음"
+        else if (v != SCHEMA_VERSION) warnings += "schema_version '$v' (지원: $SCHEMA_VERSION)"
+        return v.ifEmpty { SCHEMA_VERSION }
+    }
 
     // ---------------------------------------------------------------- VehicleFrame v1
 
@@ -19,6 +27,10 @@ object ContractJson {
 
     fun parseVehicleFrame(o: JSONObject): ParseResult<VehicleFrame> {
         val warnings = ArrayList<String>()
+        val version = checkVersion(o, warnings)
+        val cs = o.optString("coordinate_system", "")
+        if (cs.isNotEmpty() && cs != COORDINATE_SYSTEM) warnings += "coordinate_system '$cs' (지원: $COORDINATE_SYSTEM)"
+        if (cs.isEmpty()) warnings += "coordinate_system 없음"
         val arr = o.optJSONArray("vehicles") ?: JSONArray().also { warnings += "vehicles 필드 없음" }
         val vehicles = ArrayList<VehicleState>()
         for (i in 0 until arr.length()) {
@@ -39,7 +51,7 @@ object ContractJson {
                 headingRad = nums.getValue("heading_rad").toFloat(),
                 lengthM = nums.getValue("length_m").toFloat(),
                 widthM = nums.getValue("width_m").toFloat(),
-                laneId = if (v.has("lane_id") && !v.isNull("lane_id")) v.optInt("lane_id") else null,
+                laneId = if (v.has("lane_id") && !v.isNull("lane_id")) v.get("lane_id").toString() else null,
             )
         }
         return ParseResult(
@@ -47,13 +59,17 @@ object ContractJson {
                 timestampMs = o.getLong("timestamp_ms"),
                 egoId = o.optString("ego_id", "ego"),
                 vehicles = vehicles,
+                schemaVersion = version,
+                coordinateSystem = cs.ifEmpty { COORDINATE_SYSTEM },
             ),
             warnings,
         )
     }
 
     fun toJson(f: VehicleFrame): JSONObject = JSONObject().apply {
+        put("schema_version", f.schemaVersion)
         put("timestamp_ms", f.timestampMs)
+        put("coordinate_system", f.coordinateSystem)
         put("ego_id", f.egoId)
         put("vehicles", JSONArray().apply {
             f.vehicles.forEach { v ->
@@ -61,7 +77,7 @@ object ContractJson {
                     put("id", v.id)
                     put("x", rnd(v.x)); put("y", rnd(v.y))
                     put("vx", rnd(v.vx)); put("vy", rnd(v.vy))
-                    put("heading_rad", rnd(v.headingRad, 4))
+                    put("heading_rad", rnd(v.headingRad, 6))
                     put("length_m", rnd(v.lengthM)); put("width_m", rnd(v.widthM))
                     put("lane_id", v.laneId ?: JSONObject.NULL)
                 })
@@ -69,55 +85,59 @@ object ContractJson {
         })
     }
 
-    // ---------------------------------------------------------------- PredictionFrame (잠정)
+    // ---------------------------------------------------------------- PredictionFrame 1.0
+
+    fun parsePredictionFrame(json: String): ParseResult<PredictionFrame> = parsePredictionFrame(JSONObject(json))
 
     fun parsePredictionFrame(o: JSONObject): ParseResult<PredictionFrame> {
         val warnings = ArrayList<String>()
+        val version = checkVersion(o, warnings)
         val preds = ArrayList<VehiclePrediction>()
-        val arr = o.optJSONArray("predictions") ?: JSONArray()
+        val arr = o.optJSONArray("predictions") ?: JSONArray().also { warnings += "predictions 필드 없음" }
         for (i in 0 until arr.length()) {
             val p = arr.optJSONObject(i) ?: continue
             val vid = p.optString("vehicle_id", "")
             if (vid.isEmpty()) { warnings += "predictions[$i] vehicle_id 없음"; continue }
-            val cands = ArrayList<TrajectoryCandidate>()
-            val ca = p.optJSONArray("candidates") ?: JSONArray()
-            for (j in 0 until ca.length()) {
-                val c = ca.optJSONObject(j) ?: continue
+            val trajs = ArrayList<Trajectory>()
+            val ta = p.optJSONArray("trajectories") ?: JSONArray().also { warnings += "predictions[$i]($vid) trajectories 없음" }
+            for (j in 0 until ta.length()) {
+                val c = ta.optJSONObject(j) ?: continue
                 val pts = ArrayList<TrajectoryPoint>()
                 val pa = c.optJSONArray("points") ?: JSONArray()
                 for (k in 0 until pa.length()) {
                     val q = pa.optJSONObject(k) ?: continue
                     val x = q.optDouble("x", Double.NaN)
                     val y = q.optDouble("y", Double.NaN)
-                    if (!x.isFinite() || !y.isFinite()) continue
+                    if (!x.isFinite() || !y.isFinite()) { warnings += "predictions[$i]($vid) 궤적 점 좌표 비정상"; continue }
                     val h = q.optDouble("heading_rad", Double.NaN)
-                    pts += TrajectoryPoint(q.optLong("t_offset_ms", 0), x.toFloat(), y.toFloat(),
-                        if (h.isFinite()) h.toFloat() else null)
+                    pts += TrajectoryPoint(q.optLong("dt_ms", 0), x.toFloat(), y.toFloat(), if (h.isFinite()) h.toFloat() else null)
                 }
-                cands += TrajectoryCandidate(c.optString("candidate_id", "$vid-$j"), c.optString("maneuver", "UNKNOWN"), pts)
+                val conf = c.optDouble("confidence", Double.NaN)
+                trajs += Trajectory(c.optString("mode", "unknown"), if (conf.isFinite()) conf.toFloat() else null, pts)
             }
-            preds += VehiclePrediction(vid, cands)
+            preds += VehiclePrediction(vid, trajs)
         }
-        return ParseResult(PredictionFrame(o.getLong("timestamp_ms"), preds), warnings)
+        return ParseResult(PredictionFrame(o.getLong("timestamp_ms"), preds, version), warnings)
     }
 
     fun toJson(f: PredictionFrame): JSONObject = JSONObject().apply {
+        put("schema_version", f.schemaVersion)
         put("timestamp_ms", f.timestampMs)
         put("predictions", JSONArray().apply {
             f.predictions.forEach { p ->
                 put(JSONObject().apply {
                     put("vehicle_id", p.vehicleId)
-                    put("candidates", JSONArray().apply {
-                        p.candidates.forEach { c ->
+                    put("trajectories", JSONArray().apply {
+                        p.trajectories.forEach { c ->
                             put(JSONObject().apply {
-                                put("candidate_id", c.candidateId)
-                                put("maneuver", c.maneuver)
+                                put("mode", c.mode)
+                                put("confidence", c.confidence?.let { rnd(it, 3) } ?: JSONObject.NULL)
                                 put("points", JSONArray().apply {
                                     c.points.forEach { q ->
                                         put(JSONObject().apply {
-                                            put("t_offset_ms", q.tOffsetMs)
+                                            put("dt_ms", q.dtMs)
                                             put("x", rnd(q.x)); put("y", rnd(q.y))
-                                            q.headingRad?.let { put("heading_rad", rnd(it, 4)) }
+                                            put("heading_rad", rnd(q.headingRad ?: (Math.PI / 2).toFloat(), 6))
                                         })
                                     }
                                 })
@@ -129,55 +149,82 @@ object ContractJson {
         })
     }
 
-    // ---------------------------------------------------------------- RiskFrame (잠정)
+    // ---------------------------------------------------------------- RiskFrame 1.0
+
+    fun parseRiskFrame(json: String): ParseResult<RiskFrame> = parseRiskFrame(JSONObject(json))
 
     fun parseRiskFrame(o: JSONObject): ParseResult<RiskFrame> {
         val warnings = ArrayList<String>()
+        val version = checkVersion(o, warnings)
         val risks = ArrayList<VehicleRisk>()
-        val arr = o.optJSONArray("risks") ?: JSONArray()
+        val arr = o.optJSONArray("risk_objects") ?: JSONArray().also { warnings += "risk_objects 필드 없음" }
         for (i in 0 until arr.length()) {
             val r = arr.optJSONObject(i) ?: continue
             val vid = r.optString("vehicle_id", "")
-            if (vid.isEmpty()) { warnings += "risks[$i] vehicle_id 없음"; continue }
-            val levelStr = r.optString("level", "")
+            if (vid.isEmpty()) { warnings += "risk_objects[$i] vehicle_id 없음"; continue }
+            val levelStr = r.optString("risk_level", "")
             val level = RiskLevel.parse(levelStr)
             if (level == RiskLevel.UNKNOWN && !levelStr.equals("UNKNOWN", true)) {
-                warnings += "risks[$i]($vid) 알 수 없는 등급 '$levelStr' → UNKNOWN"
+                warnings += "risk_objects[$i]($vid) 알 수 없는 등급 '$levelStr' → UNKNOWN"
             }
-            val region = ArrayList<Point2>()
-            val ra = r.optJSONArray("risk_region") ?: JSONArray()
-            for (k in 0 until ra.length()) {
-                val q = ra.optJSONObject(k) ?: continue
-                val x = q.optDouble("x", Double.NaN); val y = q.optDouble("y", Double.NaN)
-                if (x.isFinite() && y.isFinite()) region += Point2(x.toFloat(), y.toFloat())
+            val zones = ArrayList<RiskZone>()
+            val za = r.optJSONArray("risk_zones") ?: JSONArray()
+            for (k in 0 until za.length()) {
+                val z = za.optJSONObject(k) ?: continue
+                val poly = ArrayList<Point2>()
+                val pa = z.optJSONArray("polygon") ?: JSONArray()
+                for (m in 0 until pa.length()) {
+                    val q = pa.optJSONObject(m) ?: continue
+                    val x = q.optDouble("x", Double.NaN); val y = q.optDouble("y", Double.NaN)
+                    if (x.isFinite() && y.isFinite()) poly += Point2(x.toFloat(), y.toFloat())
+                }
+                if (poly.size >= 3) zones += RiskZone(z.optLong("dt_ms", 0), poly)
+                else warnings += "risk_objects[$i]($vid) risk_zones[$k] 꼭짓점 3개 미만"
             }
+            val ttc = r.optDouble("ttc_s", Double.NaN)
             risks += VehicleRisk(
                 vehicleId = vid,
                 level = level,
-                causeCodes = strings(r.optJSONArray("cause_codes")),
+                reasonCodes = strings(r.optJSONArray("reason_codes")),
+                ttcS = if (ttc.isFinite()) ttc.toFloat() else null,
+                riskZones = zones,
                 sourceVehicleIds = strings(r.optJSONArray("source_vehicle_ids")),
-                riskRegion = region,
-                trajectoryCandidateId = r.optString("trajectory_candidate_id", "").ifEmpty { null },
+                trajectoryMode = r.optString("trajectory_mode", "").ifEmpty { null },
                 message = r.optString("message", "").ifEmpty { null },
             )
         }
-        return ParseResult(RiskFrame(o.getLong("timestamp_ms"), risks), warnings)
+        return ParseResult(RiskFrame(o.getLong("timestamp_ms"), risks, version), warnings)
     }
 
-    fun toJson(f: RiskFrame): JSONObject = JSONObject().apply {
+    /**
+     * @param includeExtensions false 면 계약 필드만 내보낸다. true 면 시각화 엔진이 제안한 선택 필드
+     *   (source_vehicle_ids, trajectory_mode, message)를 함께 내보낸다 — 다른 엔진은 무시한다(ignoreUnknownKeys).
+     */
+    fun toJson(f: RiskFrame, includeExtensions: Boolean = true): JSONObject = JSONObject().apply {
+        put("schema_version", f.schemaVersion)
         put("timestamp_ms", f.timestampMs)
-        put("risks", JSONArray().apply {
+        put("risk_objects", JSONArray().apply {
             f.risks.forEach { r ->
                 put(JSONObject().apply {
                     put("vehicle_id", r.vehicleId)
-                    put("level", r.level.name)
-                    put("cause_codes", JSONArray(r.causeCodes))
-                    if (r.sourceVehicleIds.isNotEmpty()) put("source_vehicle_ids", JSONArray(r.sourceVehicleIds))
-                    if (r.riskRegion.isNotEmpty()) put("risk_region", JSONArray().apply {
-                        r.riskRegion.forEach { p -> put(JSONObject().apply { put("x", rnd(p.x)); put("y", rnd(p.y)) }) }
+                    put("risk_level", r.level.name)
+                    put("reason_codes", JSONArray(r.reasonCodes))
+                    put("ttc_s", r.ttcS?.let { rnd(it) } ?: JSONObject.NULL)
+                    put("risk_zones", JSONArray().apply {
+                        r.riskZones.forEach { z ->
+                            put(JSONObject().apply {
+                                put("dt_ms", z.dtMs)
+                                put("polygon", JSONArray().apply {
+                                    z.polygon.forEach { p -> put(JSONObject().apply { put("x", rnd(p.x)); put("y", rnd(p.y)) }) }
+                                })
+                            })
+                        }
                     })
-                    r.trajectoryCandidateId?.let { put("trajectory_candidate_id", it) }
-                    r.message?.let { put("message", it) }
+                    if (includeExtensions) {
+                        if (r.sourceVehicleIds.isNotEmpty()) put("source_vehicle_ids", JSONArray(r.sourceVehicleIds))
+                        r.trajectoryMode?.let { put("trajectory_mode", it) }
+                        r.message?.let { put("message", it) }
+                    }
                 })
             }
         })
