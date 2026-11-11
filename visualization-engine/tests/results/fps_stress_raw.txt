@@ -1,0 +1,34 @@
+# PRISM visualization-engine FPS stress raw log
+# date: 2026-11-10 21:27  build: demo release (non-debuggable, debug-key signed, minify off)
+# device: Connect on x86_64 emulator / API 34 / Physical size: 2560x1440 / 4 vCPU / emulator -gpu host
+# mode: StressScreen, DisplayMode.DETAIL, all vehicles move every frame, window=2s (Choreographer), run 13s per N
+vehicles=10 fps=57.0
+vehicles=10 fps=60.0
+vehicles=10 fps=58.0
+vehicles=10 fps=60.0
+vehicles=10 fps=60.0
+vehicles=10 fps=60.0
+vehicles=30 fps=53.6
+vehicles=30 fps=59.5
+vehicles=30 fps=60.0
+vehicles=30 fps=59.0
+vehicles=30 fps=59.0
+vehicles=30 fps=60.0
+vehicles=50 fps=48.1
+vehicles=50 fps=52.6
+vehicles=50 fps=58.0
+vehicles=50 fps=59.5
+vehicles=50 fps=59.5
+vehicles=50 fps=60.0
+vehicles=100 fps=51.6
+vehicles=100 fps=52.1
+vehicles=100 fps=58.5
+vehicles=100 fps=57.0
+vehicles=100 fps=59.0
+vehicles=100 fps=49.5
+vehicles=200 fps=45.7
+vehicles=200 fps=47.2
+vehicles=200 fps=50.6
+vehicles=200 fps=50.6
+vehicles=200 fps=52.1
+vehicles=200 fps=51.6

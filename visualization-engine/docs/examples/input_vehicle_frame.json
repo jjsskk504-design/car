@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0",
+  "ego_id": "ego",
+  "coordinate_system": "ego_local_m",
+  "vehicles": [
+    {
+      "vx": 0,
+      "vy": 27,
+      "x": 0,
+      "y": 0,
+      "heading_rad": 1.570796,
+      "lane_id": "L2",
+      "id": "ego",
+      "width_m": 1.9,
+      "length_m": 4.6
+    },
+    {
+      "vx": 0,
+      "vy": 9,
+      "x": 3.5,
+      "y": 34.78,
+      "heading_rad": 1.570796,
+      "lane_id": "L3",
+      "id": "T1",
+      "width_m": 2.5,
+      "length_m": 12
+    },
+    {
+      "vx": -1.2,
+      "vy": 22.25,
+      "x": 1.7,
+      "y": 16.69,
+      "heading_rad": 1.624677,
+      "lane_id": "L2",
+      "id": "R1",
+      "width_m": 1.9,
+      "length_m": 4.6
+    },
+    {
+      "vx": 0,
+      "vy": 27,
+      "x": 0,
+      "y": 55,
+      "heading_rad": 1.570796,
+      "lane_id": "L2",
+      "id": "F1",
+      "width_m": 2.1,
+      "length_m": 5.2
+    },
+    {
+      "vx": 0,
+      "vy": 28,
+      "x": -3.5,
+      "y": -3.5,
+      "heading_rad": 1.570796,
+      "lane_id": "L1",
+      "id": "L1",
+      "width_m": 2.1,
+      "length_m": 5.2
+    },
+    {
+      "vx": 0,
+      "vy": 27,
+      "x": 0,
+      "y": -20,
+      "heading_rad": 1.570796,
+      "lane_id": "L2",
+      "id": "B1",
+      "width_m": 1.9,
+      "length_m": 4.6
+    }
+  ],
+  "timestamp_ms": 1700000004500
+}

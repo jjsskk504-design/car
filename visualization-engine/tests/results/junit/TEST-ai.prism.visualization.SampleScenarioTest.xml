@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ai.prism.visualization.SampleScenarioTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:36:07.858Z" hostname="강재석" time="0.691">
+  <properties/>
+  <testcase name="laneChange_onlyIntrudingVehicleHighlighted_withLaneChangePath" classname="ai.prism.visualization.SampleScenarioTest" time="0.109"/>
+  <testcase name="normal_everyVehicleNeutral" classname="ai.prism.visualization.SampleScenarioTest" time="0.056"/>
+  <testcase name="allScenariosParse_andCoordinatesAreEgoRelative" classname="ai.prism.visualization.SampleScenarioTest" time="0.237"/>
+  <testcase name="chain_truckIsSource_andRelationsFormChain" classname="ai.prism.visualization.SampleScenarioTest" time="0.096"/>
+  <testcase name="sensorDropout_unknownAndWarningSuppressed" classname="ai.prism.visualization.SampleScenarioTest" time="0.037"/>
+  <testcase name="frontBrake_leadThenFollowerChange" classname="ai.prism.visualization.SampleScenarioTest" time="0.058"/>
+  <testcase name="replayEvents_explainCauses" classname="ai.prism.visualization.SampleScenarioTest" time="0.056"/>
+  <testcase name="replayIndexAndInterpolation" classname="ai.prism.visualization.SampleScenarioTest" time="0.037"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

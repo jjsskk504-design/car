@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="12" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-11-10T13:29:15" hostname="localhost">
+  <testsuite name="ai.prism.visualization.RadarScreenUiTest" tests="5" failures="0" errors="0" skipped="0" time="9.219" timestamp="2026-11-10T13:29:15" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="staleData_suppressesWarning" classname="ai.prism.visualization.RadarScreenUiTest" time="1.802" />
+    <testcase name="vehicleClick_onlyInDetailMode" classname="ai.prism.visualization.RadarScreenUiTest" time="1.282" />
+    <testcase name="riskFrameMissing_allNeutral" classname="ai.prism.visualization.RadarScreenUiTest" time="2.059" />
+    <testcase name="missingVehicleData_showsNotice" classname="ai.prism.visualization.RadarScreenUiTest" time="1.319" />
+    <testcase name="riskColorTransitions_NORMAL_WATCH_WARNING_UNKNOWN" classname="ai.prism.visualization.RadarScreenUiTest" time="2.757" />
+  </testsuite>
+  <testsuite name="ai.prism.visualization.ReplayScreenUiTest" tests="4" failures="0" errors="0" skipped="0" time="8.521" timestamp="2026-11-10T13:29:15" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="playPause_and_progressAdvances" classname="ai.prism.visualization.ReplayScreenUiTest" time="3.705" />
+    <testcase name="seekShowsCauseOfSelectedVehicle" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.567" />
+    <testcase name="detailHiddenWhileDriving" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.392" />
+    <testcase name="lifecycle_stateSurvivesRecreation" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.857" />
+  </testsuite>
+  <testsuite name="ai.prism.visualization.ResolutionAndPerformanceTest" tests="3" failures="0" errors="0" skipped="0" time="31.503" timestamp="2026-11-10T13:29:15" hostname="localhost">
+    <properties>
+      <property name="device" value="emulator-5554" />
+    </properties>
+    <testcase name="landscapeResolutions_layoutAndRoadFit" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="2.561" />
+    <testcase name="drivingRadar_screenshots" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="2.431" />
+    <testcase name="renderCost_scalesWithVehicleCount" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="26.511" />
+  </testsuite>
+</testsuites>
