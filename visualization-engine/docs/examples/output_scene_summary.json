@@ -1,0 +1,120 @@
+{
+  "DRIVING": {
+    "summary": "경고 1대(R1)",
+    "highest_level": "WARNING",
+    "notices": [],
+    "regions": [
+      "R1",
+      "R1",
+      "R1"
+    ],
+    "trajectories": ["R1:braking (강조)"],
+    "vehicles": [
+      {
+        "cause_text": null,
+        "reported_level": null,
+        "is_source": false,
+        "id": "ego",
+        "display_level": "EGO"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": true,
+        "id": "T1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": "내 차로 진입 · 앞 차량과 간격 좁아짐 (TTC 2.5초)",
+        "reported_level": "WARNING",
+        "is_source": false,
+        "id": "R1",
+        "display_level": "WARNING"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "F1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "L1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "B1",
+        "display_level": "NORMAL"
+      }
+    ],
+    "relations": ["T1 -> R1"]
+  },
+  "DETAIL": {
+    "summary": "경고 1대(R1)",
+    "highest_level": "WARNING",
+    "notices": [],
+    "regions": [
+      "R1",
+      "R1",
+      "R1"
+    ],
+    "trajectories": [
+      "T1:lane_keep",
+      "R1:braking (강조)",
+      "F1:lane_keep",
+      "L1:lane_keep",
+      "B1:lane_keep"
+    ],
+    "vehicles": [
+      {
+        "cause_text": null,
+        "reported_level": null,
+        "is_source": false,
+        "id": "ego",
+        "display_level": "EGO"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": true,
+        "id": "T1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": "내 차로 진입 · 앞 차량과 간격 좁아짐 (TTC 2.5초)",
+        "reported_level": "WARNING",
+        "is_source": false,
+        "id": "R1",
+        "display_level": "WARNING"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "F1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "L1",
+        "display_level": "NORMAL"
+      },
+      {
+        "cause_text": null,
+        "reported_level": "NORMAL",
+        "is_source": false,
+        "id": "B1",
+        "display_level": "NORMAL"
+      }
+    ],
+    "relations": ["T1 -> R1"]
+  }
+}

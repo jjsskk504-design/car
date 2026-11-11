@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "risk_objects": [
+    {
+      "reason_codes": [],
+      "risk_level": "NORMAL",
+      "risk_zones": [],
+      "vehicle_id": "T1",
+      "ttc_s": null
+    },
+    {
+      "reason_codes": [
+        "LANE_CHANGE_INTRUSION",
+        "FRONT_CLOSING"
+      ],
+      "risk_level": "WARNING",
+      "trajectory_mode": "braking",
+      "risk_zones": [
+        {
+          "dt_ms": 1000,
+          "polygon": [
+            {
+              "x": 0.4,
+              "y": 34.69
+            },
+            {
+              "x": 3,
+              "y": 34.69
+            },
+            {
+              "x": 3,
+              "y": 40.69
+            },
+            {
+              "x": 0.4,
+              "y": 40.69
+            }
+          ]
+        },
+        {
+          "dt_ms": 2000,
+          "polygon": [
+            {
+              "x": 0.2,
+              "y": 52.79
+            },
+            {
+              "x": 3.2,
+              "y": 52.79
+            },
+            {
+              "x": 3.2,
+              "y": 59.59
+            },
+            {
+              "x": 0.2,
+              "y": 59.59
+            }
+          ]
+        },
+        {
+          "dt_ms": 3000,
+          "polygon": [
+            {
+              "x": 0,
+              "y": 68.39
+            },
+            {
+              "x": 3.4,
+              "y": 68.39
+            },
+            {
+              "x": 3.4,
+              "y": 75.99
+            },
+            {
+              "x": 0,
+              "y": 75.99
+            }
+          ]
+        }
+      ],
+      "vehicle_id": "R1",
+      "source_vehicle_ids": ["T1"],
+      "ttc_s": 2.54
+    },
+    {
+      "reason_codes": [],
+      "risk_level": "NORMAL",
+      "risk_zones": [],
+      "vehicle_id": "F1",
+      "ttc_s": null
+    },
+    {
+      "reason_codes": [],
+      "risk_level": "NORMAL",
+      "risk_zones": [],
+      "vehicle_id": "L1",
+      "ttc_s": null
+    },
+    {
+      "reason_codes": [],
+      "risk_level": "NORMAL",
+      "risk_zones": [],
+      "vehicle_id": "B1",
+      "ttc_s": null
+    }
+  ],
+  "timestamp_ms": 1700000004500
+}

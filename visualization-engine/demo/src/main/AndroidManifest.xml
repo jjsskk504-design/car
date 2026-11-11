@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:label="PRISM Viz Demo"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+        <!-- 생명주기 복구 검증을 위해 configChanges 를 지정하지 않는다(회전 시 Activity 재생성). -->
+        <activity
+            android:name=".DemoActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

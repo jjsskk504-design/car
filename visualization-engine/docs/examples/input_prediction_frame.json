@@ -1,0 +1,291 @@
+{
+  "schema_version": "1.0",
+  "timestamp_ms": 1700000004500,
+  "predictions": [
+    {
+      "trajectories": [{
+        "mode": "lane_keep",
+        "confidence": null,
+        "points": [
+          {
+            "dt_ms": 500,
+            "x": 3.5,
+            "y": 39.28,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1000,
+            "x": 3.5,
+            "y": 43.78,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1500,
+            "x": 3.5,
+            "y": 48.28,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2000,
+            "x": 3.5,
+            "y": 52.78,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2500,
+            "x": 3.5,
+            "y": 57.28,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3000,
+            "x": 3.5,
+            "y": 61.78,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3500,
+            "x": 3.5,
+            "y": 66.28,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 4000,
+            "x": 3.5,
+            "y": 70.78,
+            "heading_rad": 1.570796
+          }
+        ]
+      }],
+      "vehicle_id": "T1"
+    },
+    {
+      "trajectories": [{
+        "mode": "braking",
+        "confidence": null,
+        "points": [
+          {
+            "dt_ms": 500,
+            "x": 1.7,
+            "y": 27.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1000,
+            "x": 1.7,
+            "y": 37.69,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1500,
+            "x": 1.7,
+            "y": 47.25,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2000,
+            "x": 1.7,
+            "y": 56.19,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2500,
+            "x": 1.7,
+            "y": 64.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3000,
+            "x": 1.7,
+            "y": 72.19,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3500,
+            "x": 1.7,
+            "y": 79.25,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 4000,
+            "x": 1.7,
+            "y": 85.69,
+            "heading_rad": 1.570796
+          }
+        ]
+      }],
+      "vehicle_id": "R1"
+    },
+    {
+      "trajectories": [{
+        "mode": "lane_keep",
+        "confidence": null,
+        "points": [
+          {
+            "dt_ms": 500,
+            "x": 0,
+            "y": 68.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1000,
+            "x": 0,
+            "y": 82,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1500,
+            "x": 0,
+            "y": 95.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2000,
+            "x": 0,
+            "y": 109,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2500,
+            "x": 0,
+            "y": 122.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3000,
+            "x": 0,
+            "y": 136,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3500,
+            "x": 0,
+            "y": 149.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 4000,
+            "x": 0,
+            "y": 163,
+            "heading_rad": 1.570796
+          }
+        ]
+      }],
+      "vehicle_id": "F1"
+    },
+    {
+      "trajectories": [{
+        "mode": "lane_keep",
+        "confidence": null,
+        "points": [
+          {
+            "dt_ms": 500,
+            "x": -3.5,
+            "y": 10.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1000,
+            "x": -3.5,
+            "y": 24.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1500,
+            "x": -3.5,
+            "y": 38.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2000,
+            "x": -3.5,
+            "y": 52.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2500,
+            "x": -3.5,
+            "y": 66.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3000,
+            "x": -3.5,
+            "y": 80.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3500,
+            "x": -3.5,
+            "y": 94.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 4000,
+            "x": -3.5,
+            "y": 108.5,
+            "heading_rad": 1.570796
+          }
+        ]
+      }],
+      "vehicle_id": "L1"
+    },
+    {
+      "trajectories": [{
+        "mode": "lane_keep",
+        "confidence": null,
+        "points": [
+          {
+            "dt_ms": 500,
+            "x": 0,
+            "y": -6.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1000,
+            "x": 0,
+            "y": 7,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 1500,
+            "x": 0,
+            "y": 20.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2000,
+            "x": 0,
+            "y": 34,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 2500,
+            "x": 0,
+            "y": 47.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3000,
+            "x": 0,
+            "y": 61,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 3500,
+            "x": 0,
+            "y": 74.5,
+            "heading_rad": 1.570796
+          },
+          {
+            "dt_ms": 4000,
+            "x": 0,
+            "y": 88,
+            "heading_rad": 1.570796
+          }
+        ]
+      }],
+      "vehicle_id": "B1"
+    }
+  ]
+}

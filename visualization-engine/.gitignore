@@ -1,0 +1,20 @@
+.gradle/
+build/
+demo/build/
+.kotlin/
+local.properties
+.idea/
+*.iml
+
+# --- 추가: 생성물·개인 환경 ---
+**/build/
+.cxx/
+.externalNativeBuild/
+captures/
+*.apk
+*.aab
+*.ap_
+*.jks
+*.keystore
+.DS_Store
+Thumbs.db
