@@ -1,8 +1,6 @@
-.venv/
+.gradle/
 build/
-dist/
-*.egg-info/
-__pycache__/
-.pytest_cache/
-*.py[cod]
+.idea/
+local.properties
+*.iml
 
