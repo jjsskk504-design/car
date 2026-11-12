@@ -1,0 +1,1 @@
+{"scenario_id":"sim_merge","title":"[03] 오른쪽 차선 저속 차량이 가속하며 자차 차선 전방으로 합류 (직선 3차선에서의 근사)","duration_ms":12000,"step_ms":100,"seed":104,"ego_id":"ego","event_annotation":[{"t_ms":2000,"label":"합류 차량 가속"},{"t_ms":3000,"label":"L3 -> L2 합류"}],"provenance":"PRISM simulation-engine 0.2.0 (Kotlin/JVM) / simulation-engine/samples/merge.jsonl"}

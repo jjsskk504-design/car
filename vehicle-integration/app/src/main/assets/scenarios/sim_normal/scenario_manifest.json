@@ -1,0 +1,1 @@
+{"scenario_id":"sim_normal","title":"[03] 3차선 정속 주행, 주변 5대, 위협 이벤트 없음","duration_ms":12000,"step_ms":100,"seed":101,"ego_id":"ego","provenance":"PRISM simulation-engine 0.2.0 (Kotlin/JVM) / simulation-engine/samples/normal.jsonl"}

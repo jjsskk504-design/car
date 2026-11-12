@@ -20,7 +20,7 @@ private fun loaderFor(base: String): Pair<JsonFileProviders, ScenarioLoader> {
 
 /** 앱에 실제로 들어가는 assets 시나리오 전체를 Android 없이 검증한다. */
 class AssetScenarioIntegrationTest {
-    private val pl = loaderFor("../app/src/main/assets")
+    private val pl = engineLoader(FileTextSource(File("../app/src/main/assets"))) // 앱과 같은 로더(파일 + 01·02 엔진)
     private val providers = pl.first
     private val loader = pl.second
 
@@ -65,6 +65,21 @@ class AssetScenarioIntegrationTest {
             val t = (r as LoadResult.Ready).timeline
             val levels = (0..t.durationMs step 100).map { t.snapshotAt(it).topLevel.name }.toSet()
             assertTrue("$id levels=$levels", "WARNING" in levels || "WATCH" in levels)
+        }
+    }
+
+    /** 03 시나리오는 예측·위험 파일 없이 01·02 엔진이 계산한다. */
+    @Test fun sim03ScenariosAreComputedByEngines() {
+        val sims = all().filter { it.first.startsWith("sim_") }
+        assertEquals(7, sims.size)
+        sims.forEach { (id, r) ->
+            val t = (r as LoadResult.Ready).timeline
+            assertTrue("$id issues=${t.issues}", t.issues.none { it.severity == Severity.WARNING && ("01@" in it.where || "02@" in it.where) })
+            val risks = t.vehicleFrames.mapNotNull { t.snapshotAt(it.timestampMs).risk }.flatMap { it.riskObjects }
+            val levels = risks.groupingBy { it.riskLevel.name }.eachCount()
+            println("$id levels=$levels blocked=${risks.count { "ENGINE02_INPUT_BLOCKED" in it.reasonCodes }}")
+            assertTrue("$id: 02 입력이 막힌 차량이 있음", risks.none { "ENGINE02_INPUT_BLOCKED" in it.reasonCodes })
+            assertTrue("$id: 01 예측 궤적 없음", t.vehicleFrames.any { t.snapshotAt(it.timestampMs).prediction?.predictions?.isNotEmpty() == true })
         }
     }
 

@@ -69,7 +69,11 @@ VS Code: `현대 공모전/.vscode/tasks.json` 에 에뮬레이터 실행 · 빌
 - 예측·위험 파일이 없으면 차량만 재생하고 경고를 남긴다. VehicleFrame 이 없으면 재생하지 않는다.
 - 예측·위험은 **같은 timestamp 의 VehicleFrame 좌표계에서만** 그린다. 짝이 없는 프레임은 버리고 경고로 보고한다(다른 시점 좌표를 섞지 않음).
 - 직전 프레임이 `step_ms` 의 2배보다 오래되면 "데이터 누락"으로 표시하고 위험 등급을 UNKNOWN 으로 본다.
-- 04 visualization: `app/.../ui/Screens.kt` 의 `RadarSlot` 한 곳에서 `PlaceholderRadar` 를 `PrismRadarView(vehicleFrame, predictionFrame, riskFrame, mode)` 로 바꾸고 `app/build.gradle.kts` 에 모듈/AAR 의존성을 추가한다.
+- **엔진 연결 (2026-11-12)**: 01·02·04 는 각 팀 폴더의 Kotlin 소스를 05 빌드에서 그대로 컴파일한다(복사·수정 없음).
+  - 01 `prediction-engine`, 02 `engine02-kotlin` → `adapters` 모듈. 예측·위험 파일이 없는 시나리오는 `EngineProviders.kt` 가 앱 안에서 계산한다.
+  - 02 는 검증된 도로 좌표가 필요해서 03 보조 파일 `ego_pose.jsonl` 이 있는 시나리오에서만 계산한다(없으면 추측하지 않음).
+  - 04 `visualization-engine` → `app` 모듈. `ui/Radar.kt` 의 `RadarSlot` 이 `RadarScreen` 을 쓴다.
+  - 03 샘플 가져오기: `.\gradlew.bat :adapters:importSim03` → `assets/scenarios/sim_*` (vehicle_frames, ego_pose, manifest) 와 `index.json` 갱신.
 - 엔진 결과를 넣은 뒤 `.\gradlew.bat test` 를 돌리면 `AssetScenarioIntegrationTest` 가 ID 연결·좌표계·시간 동기화를 다시 검사한다.
 
 ## Mock 데이터

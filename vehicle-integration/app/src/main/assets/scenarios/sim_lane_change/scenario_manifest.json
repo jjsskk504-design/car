@@ -1,0 +1,1 @@
+{"scenario_id":"sim_lane_change","title":"[03] 왼쪽 차선에서 추월한 차량이 자차 전방으로 근접 끼어들기","duration_ms":12000,"step_ms":100,"seed":105,"ego_id":"ego","event_annotation":[{"t_ms":5500,"label":"L1 -> L2 끼어들기"}],"provenance":"PRISM simulation-engine 0.2.0 (Kotlin/JVM) / simulation-engine/samples/lane_change.jsonl"}

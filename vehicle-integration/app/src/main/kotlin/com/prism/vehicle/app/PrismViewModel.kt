@@ -6,9 +6,8 @@ import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.prism.vehicle.adapters.Gear
-import com.prism.vehicle.adapters.JsonFileProviders
+import com.prism.vehicle.adapters.engineLoader
 import com.prism.vehicle.adapters.LoadResult
-import com.prism.vehicle.adapters.ScenarioLoader
 import com.prism.vehicle.adapters.SupportStatus
 import com.prism.vehicle.adapters.SdkFeature
 import com.prism.vehicle.adapters.TextSource
@@ -70,8 +69,9 @@ data class UiState(
 }
 
 class PrismViewModel(app: Application) : AndroidViewModel(app) {
-    private val providers = JsonFileProviders(AssetTextSource(app.assets))
-    private val loader = ScenarioLoader(providers, providers, providers)
+    private val engines = engineLoader(AssetTextSource(app.assets)) // 파일 + 01·02 엔진
+    private val providers = engines.first
+    private val loader = engines.second
     private val pleos: VehicleSdkProvider = PleosVehicleSdkProvider(app)
 
     private val _ui = MutableStateFlow(UiState())

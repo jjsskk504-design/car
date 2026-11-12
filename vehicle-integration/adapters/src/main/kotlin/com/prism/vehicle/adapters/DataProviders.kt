@@ -11,10 +11,10 @@ import com.prism.vehicle.replay.Severity
 import com.prism.vehicle.replay.VehicleFrame
 
 /*
- * 엔진별 데이터 경계. Python 엔진(01·02·03)은 Android 에서 실행하지 않고, 미리 생성된 JSON 파일로만 연결한다.
- *   03 prism-simulation-engine → ScenarioDataProvider  (scenario_manifest.json, vehicle_frames.jsonl)
- *   01 prism-prediction-engine → PredictionDataProvider (prediction_frames.jsonl)
- *   02 prism-risk-engine       → RiskDataProvider       (risk_frames.jsonl)
+ * 엔진별 데이터 경계.
+ *   03 simulation-engine → ScenarioDataProvider  (scenario_manifest.json, vehicle_frames.jsonl, 보조 ego_pose.jsonl)
+ *   01 prediction-engine → PredictionDataProvider (파일이 없으면 EnginePredictionProvider 가 앱 안에서 계산)
+ *   02 engine02-kotlin   → RiskDataProvider       (파일이 없으면 EngineRiskProvider 가 앱 안에서 계산)
  */
 
 interface ScenarioDataProvider {
@@ -67,6 +67,16 @@ class JsonFileProviders(private val source: TextSource, private val root: String
         "risk_frames.json" to ContractParser::parseRiskJson,
         "risk_frame.json" to ContractParser::parseRiskJson,
     )
+
+    /** 03 보조 파일 ego_pose.jsonl(계약 외). 없거나 깨졌으면 빈 맵 → 02 위험도는 계산하지 않는다. */
+    fun egoPoses(scenarioId: String): Map<Long, EgoPose> {
+        val text = source.read("$root/$scenarioId/ego_pose.jsonl") ?: return emptyMap()
+        return runCatching {
+            text.lineSequence().filter { it.isNotBlank() }
+                .map { ContractParser.json.decodeFromString(EgoPose.serializer(), it) }
+                .associateBy { it.timestampMs }
+        }.getOrDefault(emptyMap())
+    }
 
     private fun <T> firstOf(id: String, vararg candidates: Pair<String, (String, String) -> Parsed<T>>): Parsed<T> {
         for ((file, parse) in candidates) {

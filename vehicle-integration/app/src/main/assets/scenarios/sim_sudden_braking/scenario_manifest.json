@@ -1,0 +1,1 @@
+{"scenario_id":"sim_sudden_braking","title":"[03] 같은 차선 전방 30m 화물차가 t=4s에 25->5 m/s 급감속 (최대 -6 m/s^2)","duration_ms":12000,"step_ms":100,"seed":102,"ego_id":"ego","event_annotation":[{"t_ms":4000,"label":"전방 화물차 급감속"}],"provenance":"PRISM simulation-engine 0.2.0 (Kotlin/JVM) / simulation-engine/samples/sudden_braking.jsonl"}

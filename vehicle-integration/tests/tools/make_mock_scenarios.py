@@ -200,15 +200,16 @@ def main():
         Car("car_04", "L1", -25, 25), Car("car_05", "L3", 30, 25)],
         [(0, "정상 주행, 5대 일정 속도")]))
     scenarios.append(run("rear_approach", "뒤차 급접근", [
-        ego(), Car("car_r", "L2", -45, 36, lane_plan=[(6.5, "L1", 2.0)]), Car("car_02", "L1", 20, 25),
+        # car_r 은 4.1s 에 자차 위치에 닿으므로 그 전에 L1 로 피한다. car_02 는 L1 에서 car_r 에 따라잡히지 않을 만큼 앞에 둔다.
+        ego(), Car("car_r", "L2", -45, 36, lane_plan=[(2.0, "L1", 2.0)]), Car("car_02", "L1", 75, 25),
         Car("car_03", "L3", 10, 24), Car("car_04", "L3", -20, 25), Car("car_05", "L1", -30, 24)],
-        [(0, "후방 car_r 36 m/s 로 접근"), (6500, "car_r 좌측 차선으로 회피")]))
+        [(0, "후방 car_r 36 m/s 로 접근"), (2000, "car_r 좌측 차선으로 회피")]))
     scenarios.append(run("sudden_brake", "앞차 급감속", [
         ego(), Car("car_01", "L2", 32, 25, accel=brake(3.0, 5.5, -7.0)), Car("car_02", "L1", 10, 25),
         Car("car_03", "L3", -5, 25), Car("car_04", "L1", -25, 25), Car("car_05", "L3", 35, 25)],
         [(3000, "car_01 급감속 -7 m/s²"), (5500, "car_01 감속 종료")]))
     scenarios.append(run("lane_change", "옆 차선 끼어들기", [
-        ego(), Car("car_02", "L3", 14, 23, lane_plan=[(3.0, "L2", 2.5)]), Car("car_01", "L2", 50, 25),
+        ego(), Car("car_02", "L3", 18, 23, lane_plan=[(3.0, "L2", 2.5)]), Car("car_01", "L2", 50, 25),
         Car("car_03", "L1", 5, 25), Car("car_04", "L1", -20, 25), Car("car_05", "L3", -15, 25)],
         [(3000, "car_02 자차 차선으로 차선 변경 시작"), (5500, "차선 변경 완료")]))
     scenarios.append(run("chain_reaction", "화물차 급감속 연쇄 위험", [

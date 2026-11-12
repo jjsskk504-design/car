@@ -26,6 +26,11 @@ android {
 
     buildFeatures { compose = true }
 
+    // 04 visualization-engine 소스를 그대로 컴파일한다(복사·수정 없음). 05 의 AGP/Compose 버전으로 빌드된다.
+    sourceSets.getByName("main") {
+        java.srcDirs(listOf("model", "rendering", "overlays", "ui", "replay").map { "../../visualization-engine/$it" })
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
