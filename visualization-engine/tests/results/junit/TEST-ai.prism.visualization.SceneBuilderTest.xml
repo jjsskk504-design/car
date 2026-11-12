@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.SceneBuilderTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:36:08.559Z" hostname="강재석" time="0.024">
+<testsuite name="ai.prism.visualization.SceneBuilderTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-11-11T06:50:34.055Z" hostname="강재석" time="0.012">
   <properties/>
-  <testcase name="riskOutOfSync_suppressesWarnings" classname="ai.prism.visualization.SceneBuilderTest" time="0.006"/>
+  <testcase name="riskOutOfSync_suppressesWarnings" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
   <testcase name="chainRelation_andSourceMarking" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
-  <testcase name="noVehicleFrame_showsEgoOnly" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
-  <testcase name="riskForMissingVehicle_isGhostUnknown_neverWarning" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
-  <testcase name="missingEgoInFrame_addsDefaultEgo" classname="ai.prism.visualization.SceneBuilderTest" time="0.003"/>
+  <testcase name="noVehicleFrame_showsEgoOnly" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="riskForMissingVehicle_isGhostUnknown_neverWarning" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
+  <testcase name="missingEgoInFrame_addsDefaultEgo" classname="ai.prism.visualization.SceneBuilderTest" time="0.002"/>
   <testcase name="styleMapping_isNotColorOnly" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
-  <testcase name="drivingMode_onlyHighlightsRiskVehiclesAndChosenCandidate" classname="ai.prism.visualization.SceneBuilderTest" time="0.002"/>
-  <testcase name="staleData_suppressesWarningsToUnknown" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
-  <testcase name="drivingMode_capsNumberOfEmphasizedVehicles" classname="ai.prism.visualization.SceneBuilderTest" time="0.002"/>
-  <testcase name="colorTransition_followsRiskFrames" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="drivingMode_onlyHighlightsRiskVehiclesAndChosenCandidate" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="staleData_suppressesWarningsToUnknown" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="drivingMode_capsNumberOfEmphasizedVehicles" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="colorTransition_followsRiskFrames" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
   <testcase name="danglingCandidateReference_stillShowsTrajectories" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
-  <testcase name="noRiskFrame_allNeutralWithNotice" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
+  <testcase name="noRiskFrame_allNeutralWithNotice" classname="ai.prism.visualization.SceneBuilderTest" time="0.0"/>
   <testcase name="invalidVehicles_droppedWithNotice" classname="ai.prism.visualization.SceneBuilderTest" time="0.001"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

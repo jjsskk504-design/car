@@ -11,7 +11,7 @@
 | 프레임 | 기준 | 상태 |
 |---|---|---|
 | VehicleFrame v1 | `simulation-engine/schema/vehicle_frame.v1.schema.json` | 반영. `lane_id` 문자열, `schema_version`, `coordinate_system` 포함 |
-| PredictionFrame 1.0 | `prediction-engine/src/prism_predict/schema/prediction_frame.schema.json` | 반영. `trajectories[{mode, confidence, points[{dt_ms, x, y, heading_rad}]}]` |
+| PredictionFrame 1.0 | `prediction-engine/src/main/resources/prediction_frame.schema.json` | 반영. `trajectories[{mode, confidence, points[{dt_ms, x, y, heading_rad}]}]` |
 | RiskFrame 1.0 | `vehicle-integration/replay/.../Contracts.kt` | 반영. `risk_objects[{vehicle_id, risk_level, reason_codes, ttc_s, risk_zones[{dt_ms, polygon}]}]` |
 
 **검증**: `TeamContractCompatibilityTest`로 다른 엔진의 실제 출력을 읽기만 해서 확인했습니다.

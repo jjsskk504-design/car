@@ -24,8 +24,9 @@ object TrajectoryOverlay {
     fun DrawScope.drawTrajectory(tr: SceneTrajectory, t: ViewportTransform) {
         if (tr.points.size < 2) return
         val base = if (tr.level == DisplayLevel.NORMAL) Color(0xFF9AA3AE) else Color(RiskStyle.of(tr.level).fill)
-        val color = if (tr.emphasized) base.copy(alpha = 0.95f) else base.copy(alpha = 0.45f)
-        val width = if (tr.emphasized) px(3f) else px(1.5f)
+        // 차량 아래 레이어에 그리며, 차량·영역을 가리지 않도록 불투명도를 낮춘다
+        val color = if (tr.emphasized) base.copy(alpha = 0.8f) else base.copy(alpha = 0.35f)
+        val width = if (tr.emphasized) px(2.5f) else px(1.5f)
         val pts = tr.points.map { t.toScreen(it) }
         val path = Path().apply {
             moveTo(pts[0].x, pts[0].y)

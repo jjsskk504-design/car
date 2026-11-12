@@ -26,7 +26,8 @@ data class RiskStyle(
         val NORMAL = RiskStyle(DisplayLevel.NORMAL, 0xFF8A919C, 0xFF5D636C, 1f, false, RiskIcon.NONE, "정상", "")
         val WATCH = RiskStyle(DisplayLevel.WATCH, 0xFFF2C230, 0xFFFFE08A, 2.5f, false, RiskIcon.TRIANGLE, "주의", "!")
         val WARNING = RiskStyle(DisplayLevel.WARNING, 0xFFE5484D, 0xFFFFFFFF, 3f, false, RiskIcon.TRIANGLE_FILLED, "경고", "!!")
-        val UNKNOWN = RiskStyle(DisplayLevel.UNKNOWN, 0x338A919C, 0xFFB8C0CC, 2f, true, RiskIcon.QUESTION, "판단 보류", "?")
+        /** 판단 보류: 파란 점선 + ?. 자차(진한 파란 실선 채움)와 구분되도록 밝은 하늘색 점선만 쓴다. */
+        val UNKNOWN = RiskStyle(DisplayLevel.UNKNOWN, 0x3360A5FA, 0xFF7DB8FF, 2f, true, RiskIcon.QUESTION, "판단 보류", "?")
 
         fun of(level: DisplayLevel): RiskStyle = when (level) {
             DisplayLevel.EGO -> EGO

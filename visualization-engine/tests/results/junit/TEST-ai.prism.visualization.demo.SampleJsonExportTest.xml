@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.demo.SampleJsonExportTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:36:11.401Z" hostname="강재석" time="1.271">
+<testsuite name="ai.prism.visualization.demo.SampleJsonExportTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-11-11T06:50:37.867Z" hostname="강재석" time="0.667">
   <properties/>
-  <testcase name="assetsAreUpToDate" classname="ai.prism.visualization.demo.SampleJsonExportTest" time="0.564"/>
-  <testcase name="exportAndRoundTrip" classname="ai.prism.visualization.demo.SampleJsonExportTest" time="0.707"/>
+  <testcase name="assetsAreUpToDate" classname="ai.prism.visualization.demo.SampleJsonExportTest" time="0.288"/>
+  <testcase name="exportAndRoundTrip" classname="ai.prism.visualization.demo.SampleJsonExportTest" time="0.379"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

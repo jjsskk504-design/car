@@ -5,7 +5,7 @@ package ai.prism.visualization.model
  *
  * 기준(팀 저장소 qwon4466/PRISM, 2026-11-11 확인):
  *  - VehicleFrame v1 : simulation-engine/schema/vehicle_frame.v1.schema.json
- *  - PredictionFrame : prediction-engine/src/prism_predict/schema/prediction_frame.schema.json
+ *  - PredictionFrame : prediction-engine/src/main/resources/prediction_frame.schema.json
  *  - RiskFrame       : vehicle-integration/replay/.../Contracts.kt (JSON Schema 파일 없음)
  * 공통 contracts/ 가 확정되면 그것이 최종 기준이며, 이 파일과 ContractJson.kt 만 맞추면 된다.
  *

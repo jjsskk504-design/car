@@ -121,7 +121,7 @@ class RadarScreenUiTest {
             RadarScreen(TestData.vehicleFrame(ts = 1000), Modifier.size(800.dp, 500.dp),
                 riskFrame = TestData.riskFrame(1000, RiskLevel.WARNING), nowMs = 3000)
         }
-        rule.onNodeWithText("ⓘ 데이터 지연 · 위험 표시 보류").assertIsDisplayed()
+        rule.onNodeWithText("ⓘ 데이터 지연 2.0초 · 위험 표시 보류").assertIsDisplayed()  // 경과 시간 표시(별도 처리)
         rule.onNodeWithText("판단 보류 1대").assertIsDisplayed()
         assertEquals(0, rule.onAllNodesWithTag("never").fetchSemanticsNodes().size)
         assertTrue(!canvasDescription().contains("경고"))

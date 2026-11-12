@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.VehicleShapesTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:36:08.622Z" hostname="강재석" time="0.088">
+<testsuite name="ai.prism.visualization.VehicleShapesTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-11-11T06:50:34.389Z" hostname="강재석" time="0.028">
   <properties/>
-  <testcase name="shapesDifferPerType" classname="ai.prism.visualization.VehicleShapesTest" time="0.045"/>
-  <testcase name="shapesAreLeftRightSymmetric" classname="ai.prism.visualization.VehicleShapesTest" time="0.02"/>
-  <testcase name="classifyByDimensions" classname="ai.prism.visualization.VehicleShapesTest" time="0.001"/>
-  <testcase name="sceneBuilderAssignsBodyType" classname="ai.prism.visualization.VehicleShapesTest" time="0.001"/>
-  <testcase name="shapesStayInsideVehicleFootprint_soPositionAndSizeArePreserved" classname="ai.prism.visualization.VehicleShapesTest" time="0.02"/>
+  <testcase name="shapesDifferPerType" classname="ai.prism.visualization.VehicleShapesTest" time="0.017"/>
+  <testcase name="shapesAreLeftRightSymmetric" classname="ai.prism.visualization.VehicleShapesTest" time="0.006"/>
+  <testcase name="classifyByDimensions" classname="ai.prism.visualization.VehicleShapesTest" time="0.0"/>
+  <testcase name="sceneBuilderAssignsBodyType" classname="ai.prism.visualization.VehicleShapesTest" time="0.0"/>
+  <testcase name="shapesStayInsideVehicleFootprint_soPositionAndSizeArePreserved" classname="ai.prism.visualization.VehicleShapesTest" time="0.004"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

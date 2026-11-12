@@ -153,7 +153,7 @@ risk-engine        ──RiskFrame──────┘
 | 프레임 | 기준 파일(팀 저장소) | 시각화 엔진이 읽는 필드 |
 |---|---|---|
 | VehicleFrame v1 | `simulation-engine/schema/vehicle_frame.v1.schema.json` | `schema_version`, `timestamp_ms`, `coordinate_system`(= `ego_local_m`), `ego_id`, `vehicles[] {id, x, y, vx, vy, heading_rad, length_m, width_m, lane_id(문자열)}` |
-| PredictionFrame 1.0 | `prediction-engine/src/prism_predict/schema/prediction_frame.schema.json` | `predictions[] {vehicle_id, trajectories[] {mode, confidence, points[] {dt_ms, x, y, heading_rad}}}` |
+| PredictionFrame 1.0 | `prediction-engine/src/main/resources/prediction_frame.schema.json` | `predictions[] {vehicle_id, trajectories[] {mode, confidence, points[] {dt_ms, x, y, heading_rad}}}` |
 | RiskFrame 1.0 | `vehicle-integration/replay/.../Contracts.kt` (JSON Schema 파일 없음) | `risk_objects[] {vehicle_id, risk_level, reason_codes[], ttc_s, risk_zones[] {dt_ms, polygon[]}}` |
 
 - 좌표·각도: x = 오른쪽, y = 전방, 전방 주행 heading = π/2, `vx`/`vy` = 지면 속도. 팀 샘플과 일치하는 것을 확인했습니다.
@@ -176,9 +176,11 @@ risk-engine        ──RiskFrame──────┘
 | 필요한 위험 객체만 강조 | 주행 모드에서는 위험 등급 상위 3대만 궤적·영역 표시, 위험 판단에 쓰인 후보 궤적만 그림. 화면 밖 위험 차량은 가장자리에 방향 + 거리만 표시 |
 | 상세 분석은 정차 후에만 | `ReplayScreen(isVehicleStopped = false)`이면 상세 화면 대신 안내 문구만 표시. 주행 모드에서는 차량 탭 비활성 |
 | 차선·차량 방향 표시 | 차선별 진행 방향 셰브런, 탑뷰 자동차 그래픽(앞유리·보닛 방향), heading 회전 |
-| 차량 그래픽 | **승용차·SUV·대형 화물차** 탑뷰를 직접 만든 벡터 도형으로 그림(외부 이미지 없음). 자차 = 파란색, 다른 차량 = 회색. WATCH = 노란 외곽선, WARNING = 빨간 외곽선(+ 같은 색 테두리 띠), UNKNOWN = 반투명 차체 + 점선 외곽선 + ? 기호. 차종은 계약에 필드가 없어 `length_m`·`width_m`으로 추정(7 m 이상 화물차, 4.75 m 이상 또는 폭 1.95 m 이상 SUV) |
-| 위험 영역·예측 궤적 | 차량 그래픽 **위에** 반투명으로 겹쳐 그림. 아이콘·트래킹 ID는 가려지지 않도록 맨 위 |
-| 트래킹 ID 연결 | ID 기준 보간(리플레이), 상세 모드 ID 라벨, 사라진 ID를 끌고 다니지 않음 |
+| 차량 그래픽 | **승용차·SUV·대형 화물차** 탑뷰를 직접 만든 벡터 도형으로 그림(외부 이미지 없음). 자차 = 파란색, 다른 차량 = 회색. WATCH = 노란 외곽선, WARNING = 빨간 외곽선(+ 같은 색 테두리 띠), UNKNOWN = 반투명 차체 + **파란 점선** + ? 기호, 데이터 지연 = **회색 점선 + 흐리게 + "지연" 칩**(판단 보류와 구분). 차종은 `length_m`·`width_m`으로 추정 |
+| 위험 영역·예측 궤적 | 세 가지를 구분: **예측 이동 경로**(선 + 시간 마디), **미래 점유 영역**(아주 옅은 채움 + 점선), **충돌 위험 영역**(같은 시점 자차 점유 영역과 겹치는 영역, 진한 채움 + 실선). 모두 차량 그래픽 **아래** 레이어에 옅게 그려 차량을 가리지 않음 |
+| 트래킹 ID·등급 라벨 | 주행 모드: 위험 차량만 [아이콘] 등급 칩("! 주의", "!! 경고"). 정차 후 상세: 모든 차량 ID, 위험 차량은 "ID · 등급" 칩. 원인 차량은 "원인" 칩. ID 기준 보간(리플레이), 사라진 ID를 끌고 다니지 않음 |
+| 연쇄 위험 관계 | RiskFrame `source_vehicle_ids`로 **확인된 관계만** 원인(○) → 영향받는 차량(화살촉) 실선으로 연결. 자차 위험(강조 대상)과 연결된 관계만 그리고, 그 원인 차량에만 "원인" 표시 |
+| 그리기 순서 | 도로 → 미래 점유 영역 → 충돌 위험 영역 → 예측 경로 → 차량 → 연쇄 위험 연결선 → 위치 미상 차량 → 라벨 칩 → 화면 밖 표시 |
 
 ---
 
@@ -202,9 +204,9 @@ risk-engine        ──RiskFrame──────┘
 
 | 구분 | 내용 | 결과 |
 |---|---|---|
-| JVM 단위(라이브러리 45 + 데모 3 = 48) | **팀 실제 출력 호환성**, 차량 도형·차종 분류, 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 통과 |
+| JVM 단위(라이브러리 51 + 데모 3 = 54) | **팀 실제 출력 호환성**, 표시 규칙(충돌 영역 판정·원인 강조 범위·데이터 지연), 차량 도형·차종 분류, 계약 파싱·깨진 데이터, 좌표 변환·해상도, 등급 스타일·색 전환, 데이터 누락·지연·동기화, 주행 모드 강조 제한, 5개 시나리오 표시 규칙, 리플레이 이벤트·보간, Mock 데이터 충돌 없음 | 54/54 통과 |
 | Compose UI 계측(12) | 픽셀 색으로 NORMAL→WATCH→WARNING→UNKNOWN 전환 검증, 데이터 누락 안내, 지연 시 경고 억제, 모드별 탭, 재생/일시정지, 원인 패널, 주행 중 잠금, **상태 복원(생명주기)**, 가로 해상도 5종, 렌더링 비용 | 11/12 통과 |
-| **합계** | | **59/60 통과** (렌더링 비용 벤치마크 1건은 에뮬레이터 과부하로 실패, RESULTS.md 2절) |
+| **합계** | | **65/66 통과** (렌더링 비용 벤치마크 1건은 에뮬레이터 과부하로 실패. 같은 세션에서 변경 전 버전도 똑같이 실패, RESULTS.md 참고) |
 
 **실제 화면 FPS**: 데모 release 빌드를 Pleos_Connect AVD(호스트 GPU, 60 Hz)에서 쟀습니다.
 - 조건: 상세 모드에서 모든 차량이 매 프레임 움직이고, 워밍업 구간은 뺀 중앙값입니다.
@@ -224,6 +226,7 @@ risk-engine        ──RiskFrame──────┘
 
 | 파일 | 장면 |
 |---|---|
+| `docs/screenshots/polish/side_*.png` | **UI/UX 개선 전후 비교**(연쇄 위험 전조·끼어들기, 차선 변경, 리플레이 상세 패널). 아래 01~08은 개선 전 화면입니다 |
 | `docs/screenshots/01_normal_drive.png` | 정상 주행 — 모든 차량 중립 |
 | `docs/screenshots/02_front_brake_drive.png` | 전방 급감속 — 앞 차량 경고, 후속 차량 변화 |
 | `docs/screenshots/03_lane_change_drive.png` | 차선 변경 — 진입 예상 차량만 강조 + 차선 변경 경로 |

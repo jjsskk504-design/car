@@ -135,7 +135,8 @@ fun RadarStatusBar(scene: Scene, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.testTag(RadarTestTags.STATUS)) {
             val top = scene.highestLevel
             val style = RiskStyle.of(top)
-            if (top != DisplayLevel.NORMAL) {
+            // 데이터가 오래되면 판단 보류(파란색)와 구분해 회색으로만 표시
+            if (top != DisplayLevel.NORMAL && !scene.stale) {
                 LevelIcon(top, Modifier.size(28.dp))
                 Spacer(Modifier.width(6.dp))
             }
@@ -147,7 +148,11 @@ fun RadarStatusBar(scene: Scene, modifier: Modifier = Modifier) {
             }
             Text(
                 text,
-                color = if (top == DisplayLevel.WARNING || top == DisplayLevel.WATCH) Color(style.fill) else RadarColors.text,
+                color = when {
+                    scene.stale -> RadarColors.subtext
+                    top == DisplayLevel.WARNING || top == DisplayLevel.WATCH -> Color(style.fill)
+                    else -> RadarColors.text
+                },
                 fontSize = 22.sp, fontWeight = FontWeight.SemiBold,
             )
         }
@@ -171,15 +176,55 @@ fun LevelIcon(level: DisplayLevel, modifier: Modifier = Modifier.size(20.dp)) {
     }
 }
 
-/** 등급 범례: 색 + 아이콘 + 글자. */
+/** 범례 한 줄에 쓰는 표시 견본. */
+enum class LegendSwatch { PATH, OCCUPANCY, CONFLICT, RELATION, STALE }
+
+@Composable
+private fun SwatchIcon(kind: LegendSwatch, modifier: Modifier) {
+    Canvas(modifier) {
+        val w = size.width; val h = size.height
+        val red = Color(RiskStyle.WARNING.fill)
+        val dash = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 3.dp.toPx()))
+        val box = androidx.compose.ui.geometry.Size(w * 0.8f, h * 0.7f)
+        val tl = Offset(w * 0.1f, h * 0.15f)
+        when (kind) {
+            LegendSwatch.PATH -> {
+                drawLine(red.copy(alpha = 0.8f), Offset(w * 0.1f, h * 0.8f), Offset(w * 0.9f, h * 0.2f), 2.5.dp.toPx())
+                drawCircle(red, 2.5.dp.toPx(), Offset(w * 0.5f, h * 0.5f))
+            }
+            LegendSwatch.OCCUPANCY -> {
+                drawRect(red.copy(alpha = 0.10f), tl, box)
+                drawRect(red.copy(alpha = 0.6f), tl, box, style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx(), pathEffect = dash))
+            }
+            LegendSwatch.CONFLICT -> {
+                drawRect(red.copy(alpha = 0.22f), tl, box)
+                drawRect(red, tl, box, style = androidx.compose.ui.graphics.drawscope.Stroke(2.dp.toPx()))
+            }
+            LegendSwatch.RELATION -> {
+                drawCircle(Color(RiskStyle.WATCH.fill), 3.5.dp.toPx(), Offset(w * 0.15f, h / 2), style = androidx.compose.ui.graphics.drawscope.Stroke(1.5.dp.toPx()))
+                drawLine(red, Offset(w * 0.25f, h / 2), Offset(w * 0.8f, h / 2), 2.dp.toPx())
+                val p = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(w * 0.95f, h / 2); lineTo(w * 0.75f, h * 0.3f); lineTo(w * 0.75f, h * 0.7f); close()
+                }
+                drawPath(p, red)
+            }
+            LegendSwatch.STALE -> {
+                drawRoundRect(Color(RiskStyle.NORMAL.fill).copy(alpha = 0.45f), tl, box)
+                drawRoundRect(Color(RiskStyle.NORMAL.fill), tl, box, style = androidx.compose.ui.graphics.drawscope.Stroke(1.5.dp.toPx(), pathEffect = dash))
+            }
+        }
+    }
+}
+
+/** 등급·표시 범례: 색 + 아이콘 + 글자 + 선 모양. */
 @Composable
 fun RiskLegend(modifier: Modifier = Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         listOf(
-            DisplayLevel.NORMAL to "정상 · 강조 없음",
-            DisplayLevel.WATCH to "주의 · 노란색 + !",
-            DisplayLevel.WARNING to "경고 · 빨간색 + !!",
-            DisplayLevel.UNKNOWN to "판단 보류 · 점선 + ?",
+            DisplayLevel.NORMAL to "정상 · 회색, 강조 없음",
+            DisplayLevel.WATCH to "주의 · 노란 외곽선 + !",
+            DisplayLevel.WARNING to "경고 · 빨간 외곽선 + !!",
+            DisplayLevel.UNKNOWN to "판단 보류 · 파란 점선 + ?",
         ).forEach { (lv, text) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LevelIcon(lv, Modifier.size(24.dp))
@@ -187,6 +232,18 @@ fun RiskLegend(modifier: Modifier = Modifier) {
                 Text(text, color = RadarColors.subtext, fontSize = 14.sp)
             }
         }
-        Text("점선 이중 테두리 = 위험의 원인 차량", color = RadarColors.subtext, fontSize = 14.sp)
+        listOf(
+            LegendSwatch.STALE to "데이터 지연 · 회색 점선, 흐리게",
+            LegendSwatch.PATH to "예측 이동 경로",
+            LegendSwatch.OCCUPANCY to "미래 점유 영역 · 옅은 점선",
+            LegendSwatch.CONFLICT to "충돌 위험 영역 · 자차와 겹침, 실선",
+            LegendSwatch.RELATION to "연쇄 위험 · ○ 원인 → 영향받는 차량",
+        ).forEach { (k, text) ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SwatchIcon(k, Modifier.size(24.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(text, color = RadarColors.subtext, fontSize = 14.sp)
+            }
+        }
     }
 }

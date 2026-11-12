@@ -3,9 +3,12 @@ package com.prism.vehicle.app.ui
 import ai.prism.visualization.model.RoadConfig
 import ai.prism.visualization.model.VehicleRisk
 import ai.prism.visualization.rendering.DisplayMode
+import ai.prism.visualization.rendering.RiskAnalyzer
+import ai.prism.visualization.rendering.SceneBuilder
 import ai.prism.visualization.rendering.SceneOptions
 import ai.prism.visualization.ui.RadarConfig
 import ai.prism.visualization.ui.RadarScreen
+import ai.prism.visualization.ui.RiskAnalysisPanel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -48,6 +51,23 @@ fun RadarSlot(t: ScenarioTimeline, snap: Snapshot, mode: DisplayMode, modifier: 
         config = RadarConfig(road = lanes.roadAt(frame), sceneOptions = sceneOptions),
         nowMs = snap.tMs,
         modifier = modifier,
+    )
+}
+
+/** 04 RiskAnalysisPanel. 레이더와 같은 프레임·도로 설정으로 장면을 만들어 분석한다. */
+@Composable
+fun AnalysisSlot(t: ScenarioTimeline, snap: Snapshot, modifier: Modifier) {
+    val lanes = remember(t) { LaneLayout.of(t.vehicleFrames) }
+    val sceneOptions = remember(t) { SceneOptions(staleAfterMs = t.manifest.stepMs * 2) }
+    val analysis = remember(snap) {
+        val risk = snap.risk?.toViz()
+        val scene = SceneBuilder.build(snap.vehicle?.toViz(), snap.prediction?.toViz(), risk, DisplayMode.DETAIL, snap.tMs, sceneOptions)
+        RiskAnalyzer.analyze(scene, risk, lanes.roadAt(snap.vehicle))
+    }
+    RiskAnalysisPanel(
+        analysis, modifier,
+        simulationNote = if (t.manifest.mock) "MOCK 데이터 · 실제 차량 안전 시스템이 아닙니다"
+        else "03 시뮬레이션 결과 · 실제 차량 안전 시스템이 아닙니다",
     )
 }
 

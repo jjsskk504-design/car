@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="ai.prism.visualization.TeamContractCompatibilityTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-11T04:39:05.532Z" hostname="강재석" time="0.414">
+<testsuite name="ai.prism.visualization.TeamContractCompatibilityTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-11-11T06:50:34.070Z" hostname="강재석" time="0.316">
   <properties/>
-  <testcase name="simulationEngineSamples_parse" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.105"/>
-  <testcase name="dropoutScenario_unknownIsNeverShownAsWarning" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.032"/>
-  <testcase name="vehicleIntegrationScenarios_parseWithoutWarnings_andRender" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.269"/>
+  <testcase name="simulationEngineSamples_parse" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.086"/>
+  <testcase name="dropoutScenario_unknownIsNeverShownAsWarning" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.027"/>
+  <testcase name="vehicleIntegrationScenarios_parseWithoutWarnings_andRender" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.196"/>
   <testcase name="predictionEngineExample_parses" classname="ai.prism.visualization.TeamContractCompatibilityTest" time="0.006"/>
   <system-out><![CDATA[chain_reaction: frames=101, events=6, flagged=59
 dropout: frames=86, events=2, flagged=0

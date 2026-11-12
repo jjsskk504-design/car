@@ -1,30 +1,36 @@
 <?xml version='1.0' encoding='UTF-8' ?>
-<testsuites tests="12" failures="0" errors="0" skipped="0" time="0.000" timestamp="2026-11-10T13:29:15" hostname="localhost">
-  <testsuite name="ai.prism.visualization.RadarScreenUiTest" tests="5" failures="0" errors="0" skipped="0" time="9.219" timestamp="2026-11-10T13:29:15" hostname="localhost">
+<testsuites tests="12" failures="1" errors="0" skipped="0" time="0.000" timestamp="2026-11-11T06:36:43" hostname="localhost">
+  <testsuite name="ai.prism.visualization.RadarScreenUiTest" tests="5" failures="0" errors="0" skipped="0" time="7.251" timestamp="2026-11-11T06:36:43" hostname="localhost">
     <properties>
       <property name="device" value="emulator-5554" />
     </properties>
-    <testcase name="staleData_suppressesWarning" classname="ai.prism.visualization.RadarScreenUiTest" time="1.802" />
-    <testcase name="vehicleClick_onlyInDetailMode" classname="ai.prism.visualization.RadarScreenUiTest" time="1.282" />
-    <testcase name="riskFrameMissing_allNeutral" classname="ai.prism.visualization.RadarScreenUiTest" time="2.059" />
-    <testcase name="missingVehicleData_showsNotice" classname="ai.prism.visualization.RadarScreenUiTest" time="1.319" />
-    <testcase name="riskColorTransitions_NORMAL_WATCH_WARNING_UNKNOWN" classname="ai.prism.visualization.RadarScreenUiTest" time="2.757" />
+    <testcase name="staleData_suppressesWarning" classname="ai.prism.visualization.RadarScreenUiTest" time="2.191" />
+    <testcase name="vehicleClick_onlyInDetailMode" classname="ai.prism.visualization.RadarScreenUiTest" time="1.180" />
+    <testcase name="riskFrameMissing_allNeutral" classname="ai.prism.visualization.RadarScreenUiTest" time="1.050" />
+    <testcase name="missingVehicleData_showsNotice" classname="ai.prism.visualization.RadarScreenUiTest" time="0.997" />
+    <testcase name="riskColorTransitions_NORMAL_WATCH_WARNING_UNKNOWN" classname="ai.prism.visualization.RadarScreenUiTest" time="1.833" />
   </testsuite>
-  <testsuite name="ai.prism.visualization.ReplayScreenUiTest" tests="4" failures="0" errors="0" skipped="0" time="8.521" timestamp="2026-11-10T13:29:15" hostname="localhost">
+  <testsuite name="ai.prism.visualization.ReplayScreenUiTest" tests="4" failures="0" errors="0" skipped="0" time="11.565" timestamp="2026-11-11T06:36:43" hostname="localhost">
     <properties>
       <property name="device" value="emulator-5554" />
     </properties>
-    <testcase name="playPause_and_progressAdvances" classname="ai.prism.visualization.ReplayScreenUiTest" time="3.705" />
-    <testcase name="seekShowsCauseOfSelectedVehicle" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.567" />
-    <testcase name="detailHiddenWhileDriving" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.392" />
-    <testcase name="lifecycle_stateSurvivesRecreation" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.857" />
+    <testcase name="playPause_and_progressAdvances" classname="ai.prism.visualization.ReplayScreenUiTest" time="5.857" />
+    <testcase name="seekShowsCauseOfSelectedVehicle" classname="ai.prism.visualization.ReplayScreenUiTest" time="2.113" />
+    <testcase name="detailHiddenWhileDriving" classname="ai.prism.visualization.ReplayScreenUiTest" time="1.511" />
+    <testcase name="lifecycle_stateSurvivesRecreation" classname="ai.prism.visualization.ReplayScreenUiTest" time="2.084" />
   </testsuite>
-  <testsuite name="ai.prism.visualization.ResolutionAndPerformanceTest" tests="3" failures="0" errors="0" skipped="0" time="31.503" timestamp="2026-11-10T13:29:15" hostname="localhost">
+  <testsuite name="ai.prism.visualization.ResolutionAndPerformanceTest" tests="3" failures="1" errors="0" skipped="0" time="64.333" timestamp="2026-11-11T06:36:43" hostname="localhost">
     <properties>
       <property name="device" value="emulator-5554" />
     </properties>
-    <testcase name="landscapeResolutions_layoutAndRoadFit" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="2.561" />
-    <testcase name="drivingRadar_screenshots" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="2.431" />
-    <testcase name="renderCost_scalesWithVehicleCount" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="26.511" />
+    <testcase name="landscapeResolutions_layoutAndRoadFit" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="3.341" />
+    <testcase name="drivingRadar_screenshots" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="1.765" />
+    <testcase name="renderCost_scalesWithVehicleCount" classname="ai.prism.visualization.ResolutionAndPerformanceTest" time="59.227">
+      <failure>java.lang.AssertionError: 50 vehicles avg 68.65 ms &gt; 50ms (debuggable regression bound)
+	at org.junit.Assert.fail(Assert.java:89)
+	at org.junit.Assert.assertTrue(Assert.java:42)
+	at ai.prism.visualization.ResolutionAndPerformanceTest.renderCost_scalesWithVehicleCount(ResolutionAndPerformanceTest.kt:150)
+</failure>
+    </testcase>
   </testsuite>
 </testsuites>

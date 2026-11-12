@@ -120,7 +120,7 @@ object VehicleRenderer {
     private const val SPRITE_PAD = 2f
 
     private data class SpriteKey(
-        val type: VehicleBodyType, val ego: Boolean, val translucent: Boolean,
+        val type: VehicleBodyType, val ego: Boolean, val alphaPct: Int,
         val detailed: Boolean, val lenPx: Int, val widPx: Int,
     )
 
@@ -160,7 +160,7 @@ object VehicleRenderer {
     fun DrawScope.drawVehicleBody(v: SceneVehicle, t: ViewportTransform) {
         val colors = if (v.isEgo) EGO_COLORS else VEHICLE_COLORS
         val detailed = v.lengthM * t.pxPerMeterY >= DETAIL_MIN_LENGTH_PX
-        val partAlpha = if (v.level == DisplayLevel.UNKNOWN) 0.35f else 1f
+        val partAlpha = when { v.stale -> 0.45f; v.level == DisplayLevel.UNKNOWN -> 0.35f; else -> 1f }
         // 외곽선·테두리 띠는 화면 좌표 Path 가 필요(선 두께 일정). 일반 차량은 생략해 비용을 줄인다.
         val needsOutline = v.level != DisplayLevel.NORMAL
         val frame = BodyFrame(v, t)
@@ -175,7 +175,7 @@ object VehicleRenderer {
         // 2) 자동차 그래픽: 스프라이트(직접 만든 벡터 도형을 한 번 래스터화) 1장 + 차량별 affine 행렬
         val lenPx = (v.lengthM * t.pxPerMeterY).roundToInt().coerceAtLeast(4)
         val widPx = (frame.wid * t.pxPerMeterX).roundToInt().coerceAtLeast(3)
-        val sprite = sprite(SpriteKey(v.bodyType, v.isEgo, partAlpha < 1f, detailed, lenPx, widPx), colors, partAlpha)
+        val sprite = sprite(SpriteKey(v.bodyType, v.isEgo, (partAlpha * 100).roundToInt(), detailed, lenPx, widPx), colors, partAlpha)
         frame.loadSpriteMatrix(matrix, lenPx.toFloat(), widPx.toFloat(), SPRITE_PAD)
         withTransform({ transform(matrix) }) { drawImage(sprite) }
 
@@ -184,8 +184,10 @@ object VehicleRenderer {
             DisplayLevel.EGO -> drawPath(bodyPath, Color(RiskStyle.EGO.stroke), style = Stroke(px(1.5f), join = StrokeJoin.Round))
             DisplayLevel.WATCH -> drawPath(bodyPath, Color(RiskStyle.WATCH.fill), style = Stroke(px(3f), join = StrokeJoin.Round))
             DisplayLevel.WARNING -> drawPath(bodyPath, Color(RiskStyle.WARNING.fill), style = Stroke(px(3.5f), join = StrokeJoin.Round))
-            DisplayLevel.UNKNOWN -> drawPath(bodyPath, Color(RiskStyle.UNKNOWN.stroke), style = Stroke(px(2f), join = StrokeJoin.Round,
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(px(6f), px(4f)))))
+            // 판단 보류: 파란 점선. 단, 데이터가 오래된 경우(stale)는 회색 점선으로 따로 표시
+            DisplayLevel.UNKNOWN -> drawPath(bodyPath, if (v.stale) STALE_OUTLINE else Color(RiskStyle.UNKNOWN.stroke),
+                style = Stroke(px(if (v.stale) 1.5f else 2f), join = StrokeJoin.Round,
+                    pathEffect = PathEffect.dashPathEffect(if (v.stale) floatArrayOf(px(3f), px(4f)) else floatArrayOf(px(6f), px(4f)))))
             DisplayLevel.NORMAL -> Unit
         }
 
@@ -197,22 +199,97 @@ object VehicleRenderer {
         }
     }
 
-    /** 위험 아이콘(차량 오른쪽)과 트래킹 ID/자차 라벨(차량 왼쪽). 영역·궤적보다 위에 그린다. */
+    private val STALE_OUTLINE = Color(0xFF8A919C)
+    private val CHIP_BG = Color(0xE614171C)
+
+    /**
+     * 차량 라벨 칩(차량 오른쪽, 화면 밖으로 나가면 왼쪽). 영역·궤적·연결선보다 위에 그린다.
+     * - 주행 모드(showId = false): 위험 차량만 [아이콘] 등급 짧게("경고"), 일반 차량은 표시 안 함 → 간결
+     * - 정차 후 상세(showId = true): 모든 차량 ID, 위험 차량은 "ID · 등급"
+     * - 자차: "자차", 원인 차량: 아래에 "원인" 칩 추가, 오래된 데이터: "지연"
+     * 색·아이콘 모양·글자를 함께 써서 색만으로 등급을 전달하지 않는다.
+     */
     fun DrawScope.drawVehicleAnnotations(v: SceneVehicle, t: ViewportTransform, textMeasurer: TextMeasurer?, showId: Boolean) {
-        val style = RiskStyle.of(v.level)
+        if (textMeasurer == null) {
+            // 글자를 못 그리는 환경(일부 오프스크린)에서는 아이콘만
+            val style = RiskStyle.of(v.level)
+            if (style.icon != RiskIcon.NONE) {
+                val c = t.toScreen(v.center)
+                with(RiskOverlay) { drawRiskIcon(style, Offset(c.x + px(24f), c.y), null) }
+            }
+            return
+        }
         val w = VehicleGeometry.displayWidthM(v.lengthM, v.widthM, t)
         val corners = VehicleGeometry.corners(v.center.x, v.center.y, v.headingRad, v.lengthM, w)
         val c = t.toScreen(v.center)
-        val halfW = corners.maxOf { t.toScreen(it).x } - c.x
-        if (style.icon != RiskIcon.NONE) {
-            with(RiskOverlay) { drawRiskIcon(style, Offset(c.x + halfW + px(14f), c.y), textMeasurer) }
+        val right = corners.maxOf { t.toScreen(it).x }
+        val left = corners.minOf { t.toScreen(it).x }
+
+        if (v.isEgo) {
+            val layout = textMeasurer.measure("자차", TextStyle(color = RadarColors.text, fontSize = 13.sp, fontWeight = FontWeight.Medium))
+            drawText(layout, topLeft = Offset(left - layout.size.width - px(6f), c.y - layout.size.height / 2f))
+            return
         }
-        if (textMeasurer != null && (showId || v.isEgo)) {
-            val label = if (v.isEgo) "자차" else v.id
-            val layout = textMeasurer.measure(label, TextStyle(color = RadarColors.text, fontSize = 13.sp, fontWeight = FontWeight.Medium))
-            val x = c.x - halfW - layout.size.width - px(6f)
+
+        val risky = v.level != DisplayLevel.NORMAL
+        // 일반 차량의 ID 는 칩 없이 글자만(차량이 많을 때 그리기 비용을 기존 수준으로 유지)
+        if (!risky && !v.stale && showId) {
+            val layout = textMeasurer.measure(v.id, TextStyle(color = RadarColors.subtext, fontSize = 13.sp, fontWeight = FontWeight.Medium))
+            var x = right + px(6f)
+            if (x + layout.size.width > size.width - px(2f)) x = left - px(6f) - layout.size.width
             drawText(layout, topLeft = Offset(x, c.y - layout.size.height / 2f))
+            if (v.isSource) drawChip(textMeasurer, "원인", Color(RiskStyle.WATCH.fill), CHIP_BG, Color(RiskStyle.WATCH.fill),
+                dashed = true, icon = null, anchorRight = right, anchorLeft = left, centerY = c.y + layout.size.height / 2f + px(14f))
+            return
         }
+        val text: String? = when {
+            v.stale -> if (showId) "${v.id} · 지연" else "지연"
+            risky -> if (showId) "${v.id} · ${RiskStyle.of(v.level).label}" else RiskStyle.of(v.level).label
+            showId -> v.id
+            else -> null
+        }
+        var chipBottom = c.y
+        if (text != null) {
+            val style = RiskStyle.of(v.level)
+            val showIcon = risky && !v.stale
+            val (bg, fg, border) = when {
+                v.stale -> Triple(CHIP_BG, RadarColors.subtext, STALE_OUTLINE)
+                v.level == DisplayLevel.WARNING -> Triple(Color(style.fill), Color.White, Color(style.fill))
+                v.level == DisplayLevel.WATCH -> Triple(CHIP_BG, Color(style.fill), Color(style.fill))
+                v.level == DisplayLevel.UNKNOWN -> Triple(CHIP_BG, Color(style.stroke), Color(style.stroke))
+                else -> Triple(CHIP_BG, RadarColors.text, Color(0xFF3A414C))
+            }
+            chipBottom = drawChip(textMeasurer, text, fg, bg, border,
+                dashed = v.level == DisplayLevel.UNKNOWN, icon = if (showIcon) style else null,
+                anchorRight = right, anchorLeft = left, centerY = c.y)
+        }
+        if (v.isSource) {
+            drawChip(textMeasurer, "원인", Color(RiskStyle.WATCH.fill), CHIP_BG, Color(RiskStyle.WATCH.fill),
+                dashed = true, icon = null, anchorRight = right, anchorLeft = left,
+                centerY = if (text != null) chipBottom + px(14f) else c.y)
+        }
+    }
+
+    /** 둥근 칩 하나를 그리고 칩 아래쪽 y 를 돌려준다. */
+    private fun DrawScope.drawChip(
+        tm: TextMeasurer, text: String, fg: Color, bg: Color, border: Color, dashed: Boolean, icon: RiskStyle?,
+        anchorRight: Float, anchorLeft: Float, centerY: Float,
+    ): Float {
+        val layout = tm.measure(text, TextStyle(color = fg, fontSize = 14.sp, fontWeight = FontWeight.SemiBold))
+        val padH = px(6f); val padV = px(3f)
+        val iconW = if (icon != null) px(20f) else 0f
+        val wChip = layout.size.width + padH * 2 + iconW
+        val hChip = layout.size.height + padV * 2
+        var x = anchorRight + px(6f)
+        if (x + wChip > size.width - px(2f)) x = anchorLeft - px(6f) - wChip
+        val top = centerY - hChip / 2f
+        val corner = androidx.compose.ui.geometry.CornerRadius(hChip / 2f)
+        drawRoundRect(bg, Offset(x, top), androidx.compose.ui.geometry.Size(wChip, hChip), corner)
+        drawRoundRect(border, Offset(x, top), androidx.compose.ui.geometry.Size(wChip, hChip), corner,
+            style = Stroke(px(1.2f), pathEffect = if (dashed) PathEffect.dashPathEffect(floatArrayOf(px(4f), px(3f))) else null))
+        if (icon != null) with(RiskOverlay) { drawRiskIcon(icon, Offset(x + padH + px(8f), centerY), tm, radiusDp = 8f) }
+        drawText(layout, topLeft = Offset(x + padH + iconW, top + padV))
+        return top + hChip
     }
 
     /** 정규화 도형 → 화면 Path. 차량 heading 회전 + 화면 변환(선형)이라 2차 곡선 제어점도 그대로 변환된다. */

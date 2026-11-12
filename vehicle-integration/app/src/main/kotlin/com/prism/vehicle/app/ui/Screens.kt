@@ -218,36 +218,40 @@ private fun ReplayScreen(s: UiState, vm: PrismViewModel) {
     val t = s.timeline ?: return
     val snap = t.snapshotAt(s.clock.positionMs)
     Adaptive(640.dp, main = { RadarSlot(t, snap, DisplayMode.DETAIL, it) }) { sideMod ->
-        Column(sideMod, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("리플레이 · ${t.manifest.title}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-            LevelBanner(snap)
-            Slider(
-                value = s.clock.positionMs.toFloat(),
-                onValueChange = { vm.seek(it.toLong()) },
-                valueRange = 0f..t.durationMs.toFloat().coerceAtLeast(1f),
-                modifier = Modifier.testTag("seek"),
-            )
-            Text("%.1f / %.1f s · 프레임 나이 %s".format(s.clock.positionMs / 1000.0, t.durationMs / 1000.0, snap.frameAgeMs?.let { "${it}ms" } ?: "-"))
-            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PlayPause(s.clock, vm)
-                ReplayClock.SPEEDS.forEach { sp ->
-                    if (sp == s.clock.speed) Button(onClick = {}) { Text("${sp}x") }
-                    else OutlinedButton(onClick = { vm.setSpeed(sp) }, modifier = Modifier.testTag("speed_$sp")) { Text("${sp}x") }
-                }
-                OutlinedButton(onClick = vm::back) { Text("닫기") }
+        // 오른쪽(세로 배치면 아래쪽) 전체를 한 목록으로 스크롤: 남는 높이가 작아도 분석 패널이 제 크기로 보인다
+        LazyColumn(sideMod, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            item { Text("리플레이 · ${t.manifest.title}", fontSize = 20.sp, fontWeight = FontWeight.Bold) }
+            item { LevelBanner(snap) }
+            item {
+                Slider(
+                    value = s.clock.positionMs.toFloat(),
+                    onValueChange = { vm.seek(it.toLong()) },
+                    valueRange = 0f..t.durationMs.toFloat().coerceAtLeast(1f),
+                    modifier = Modifier.testTag("seek"),
+                )
             }
-            Text("위험 근거 (02 RiskFrame)", fontWeight = FontWeight.Bold)
-            LazyColumn(Modifier.weight(1f)) {
-                items(snap.risk?.riskObjects.orEmpty()) { o ->
-                    Text("${o.vehicleId}  ${o.riskLevel}  ${o.reasonCodes.joinToString()}  TTC ${o.ttcS?.let { "%.1fs".format(it) } ?: "null"}", fontSize = 14.sp)
+            item { Text("%.1f / %.1f s · 프레임 나이 %s".format(s.clock.positionMs / 1000.0, t.durationMs / 1000.0, snap.frameAgeMs?.let { "${it}ms" } ?: "-")) }
+            item {
+                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PlayPause(s.clock, vm)
+                    ReplayClock.SPEEDS.forEach { sp ->
+                        if (sp == s.clock.speed) Button(onClick = {}) { Text("${sp}x") }
+                        else OutlinedButton(onClick = { vm.setSpeed(sp) }, modifier = Modifier.testTag("speed_$sp")) { Text("${sp}x") }
+                    }
+                    OutlinedButton(onClick = vm::back) { Text("닫기") }
                 }
-                item { Spacer(Modifier.height(8.dp)); Text("이벤트 주석 (03 manifest)", fontWeight = FontWeight.Bold) }
-                items(t.manifest.eventAnnotation) { e ->
-                    Text("%.1fs  %s".format(e.tMs / 1000.0, e.label), fontSize = 14.sp, modifier = Modifier.padding(vertical = 2.dp))
-                }
-                item { Spacer(Modifier.height(8.dp)); Text("데이터 검증 경고 ${t.issues.size}건", fontWeight = FontWeight.Bold) }
-                items(t.issues) { Text(it.toString(), fontSize = 12.sp, color = Color.Gray) }
             }
+            item { AnalysisSlot(t, snap, Modifier.fillMaxWidth().height(380.dp)) }
+            item { Text("위험 근거 (02 RiskFrame)", fontWeight = FontWeight.Bold) }
+            items(snap.risk?.riskObjects.orEmpty()) { o ->
+                Text("${o.vehicleId}  ${o.riskLevel}  ${o.reasonCodes.joinToString()}  TTC ${o.ttcS?.let { "%.1fs".format(it) } ?: "null"}", fontSize = 14.sp)
+            }
+            item { Spacer(Modifier.height(8.dp)); Text("이벤트 주석 (03 manifest)", fontWeight = FontWeight.Bold) }
+            items(t.manifest.eventAnnotation) { e ->
+                Text("%.1fs  %s".format(e.tMs / 1000.0, e.label), fontSize = 14.sp, modifier = Modifier.padding(vertical = 2.dp))
+            }
+            item { Spacer(Modifier.height(8.dp)); Text("데이터 검증 경고 ${t.issues.size}건", fontWeight = FontWeight.Bold) }
+            items(t.issues) { Text(it.toString(), fontSize = 12.sp, color = Color.Gray) }
         }
     }
 }

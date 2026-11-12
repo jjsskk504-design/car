@@ -193,13 +193,20 @@ private fun DetailPanel(
     Column(
         modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF1B1F25)).padding(14.dp)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(session.title, color = RadarColors.text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        if (session.description.isNotEmpty()) Text(session.description, color = RadarColors.subtext, fontSize = 14.sp)
+        // 1) 시나리오
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(session.title, color = RadarColors.text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            if (session.description.isNotEmpty()) Text(session.description, color = RadarColors.subtext, fontSize = 13.sp)
+        }
 
-        // 선택 차량의 위험 판단 원인
-        Column(Modifier.testTag(ReplayTestTags.CAUSE), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // 2) 선택 차량 카드: 등급 → 차량 → 원인 → 근거 순서로 읽히게
+        Column(
+            Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(Color(0xFF232832)).padding(12.dp)
+                .testTag(ReplayTestTags.CAUSE),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
             val risk = frame.risk?.risks?.firstOrNull { it.vehicleId == selectedId }
             if (selectedId == null) {
                 Text("현재 강조된 위험 차량이 없습니다. 차량을 눌러 상세 정보를 볼 수 있습니다.",
@@ -209,55 +216,95 @@ private fun DetailPanel(
                 val present = frame.vehicle.vehicles.any { it.id == selectedId }
                 val shown = if (!present && lv != RiskLevel.NORMAL) DisplayLevel.UNKNOWN else lv.toDisplay()
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    LevelIcon(shown, Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("차량 $selectedId · ${RiskStyle.of(shown).label}", color = RadarColors.text,
-                        fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    LevelPill(shown)
+                    Spacer(Modifier.weight(1f))
                     if (state.selectedVehicleId != null) {
-                        Spacer(Modifier.width(8.dp))
-                        Text("자동 선택으로", color = RadarColors.subtext, fontSize = 14.sp,
+                        Text("자동 선택으로", color = RadarColors.subtext, fontSize = 13.sp,
                             modifier = Modifier.clickable { state.selectedVehicleId = null })
                     }
                 }
-                if (!present) Text("이 시점에 차량 위치가 관측되지 않았습니다(판단 보류).", color = RadarColors.subtext, fontSize = 14.sp)
+                Text("차량 $selectedId · ${RiskStyle.of(shown).label}", color = RadarColors.text,
+                    fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                if (!present) Text("이 시점에 차량 위치가 관측되지 않았습니다(판단 보류).",
+                    color = Color(RiskStyle.UNKNOWN.stroke), fontSize = 14.sp)
                 if (risk != null && lv != RiskLevel.NORMAL) {
-                    Text("원인: ${CauseCatalog.describe(risk)}", color = RadarColors.text, fontSize = 15.sp)
-                    if (risk.reasonCodes.isNotEmpty()) Text("원인 코드: ${risk.reasonCodes.joinToString()}", color = RadarColors.subtext, fontSize = 14.sp)
-                    if (risk.sourceVehicleIds.isNotEmpty()) Text("영향을 준 차량: ${risk.sourceVehicleIds.joinToString()}", color = RadarColors.text, fontSize = 15.sp)
+                    Text("원인: ${CauseCatalog.describe(risk)}", color = RadarColors.text, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    if (risk.sourceVehicleIds.isNotEmpty()) Text("영향을 준 차량: ${risk.sourceVehicleIds.joinToString()}",
+                        color = Color(RiskStyle.WATCH.fill), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+                    InfoRow("원인 코드", risk.reasonCodes.joinToString().ifEmpty { "-" })
+                    risk.ttcS?.let { InfoRow("TTC", "%.1f초".format(it)) }
+                    if (risk.riskZones.isNotEmpty()) InfoRow("위험 영역", risk.riskZones.joinToString { "%.1f초".format(it.dtMs / 1000f) })
                 }
                 frame.prediction?.predictions?.firstOrNull { it.vehicleId == selectedId }?.let { p ->
-                    Text("예측 궤적", color = RadarColors.subtext, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("예측 궤적", color = RadarColors.subtext, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(top = 4.dp))
                     p.trajectories.forEach { c ->
                         val used = risk?.trajectoryMode != null && risk.trajectoryMode == c.mode
                         val horizon = c.points.maxOfOrNull { pt -> pt.dtMs }?.let { ms -> "%.1f초".format(ms / 1000f) } ?: "-"
                         Text("• ${CauseCatalog.maneuver(c.mode)} ($horizon)" + if (used) " — 위험 판단 근거" else "",
-                            color = if (used) RadarColors.text else RadarColors.subtext, fontSize = 14.sp)
+                            color = if (used) RadarColors.text else RadarColors.subtext, fontSize = 14.sp,
+                            fontWeight = if (used) FontWeight.SemiBold else FontWeight.Normal)
                     }
                 }
             }
         }
 
-        Text("위험 등급 변화", color = RadarColors.subtext, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        // 3) 위험 등급 변화(시간순). 현재 재생 위치 이전 이벤트는 밝게, 이후는 흐리게, 가장 최근 이벤트는 배경 강조
+        Text("위험 등급 변화 ${events.size}건", color = RadarColors.text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
         if (events.isEmpty()) Text("기록된 위험 등급 변화 없음", color = RadarColors.subtext, fontSize = 14.sp)
+        val current = events.lastOrNull { it.tMs <= state.positionMs }
         events.forEach { e ->
             val past = e.tMs <= state.positionMs
             Row(
-                Modifier.fillMaxWidth().clickable {
-                    state.positionMs = e.tMs; state.playing = false; state.selectedVehicleId = e.vehicleId
-                },
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                    .background(if (e === current) Color(0xFF2A303A) else Color.Transparent)
+                    .clickable { state.positionMs = e.tMs; state.playing = false; state.selectedVehicleId = e.vehicleId }
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("%.1f초".format(e.tMs / 1000f), color = RadarColors.subtext, fontSize = 14.sp, modifier = Modifier.width(44.dp))
-                LevelIcon(e.to.toDisplay(), Modifier.size(16.dp))
-                Spacer(Modifier.width(6.dp))
-                val src = if (e.sourceVehicleIds.isNotEmpty()) " ← ${e.sourceVehicleIds.joinToString()}" else ""
-                Text("${e.vehicleId}: ${RiskStyle.of(e.from.toDisplay()).label}→${RiskStyle.of(e.to.toDisplay()).label} · ${e.cause}$src",
-                    color = if (past) RadarColors.text else RadarColors.subtext, fontSize = 14.sp)
+                Text("%.1f초".format(e.tMs / 1000f), color = RadarColors.subtext, fontSize = 13.sp, modifier = Modifier.width(44.dp))
+                LevelIcon(e.to.toDisplay(), Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text("${e.vehicleId}  ${RiskStyle.of(e.from.toDisplay()).label} → ${RiskStyle.of(e.to.toDisplay()).label}",
+                        color = if (past) RadarColors.text else RadarColors.subtext, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    val src = if (e.sourceVehicleIds.isNotEmpty()) " · 원인 차량 ${e.sourceVehicleIds.joinToString()}" else ""
+                    Text(e.cause + src, color = RadarColors.subtext, fontSize = 13.sp)
+                }
             }
         }
-        Spacer(Modifier.height(4.dp))
+
+        Text("범례", color = RadarColors.subtext, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         RiskLegend()
         Text("기록 데이터 기반 분석 화면입니다. 차량의 기존 안전 시스템을 대체하지 않습니다.",
-            color = RadarColors.subtext, fontSize = 13.sp)
+            color = RadarColors.subtext, fontSize = 12.sp)
+    }
+}
+
+/** 등급 배지: 아이콘 + 글자, 경고는 채운 배경. */
+@Composable
+private fun LevelPill(level: DisplayLevel) {
+    val style = RiskStyle.of(level)
+    val (bg, fg) = when (level) {
+        DisplayLevel.WARNING -> Color(style.fill) to Color.White
+        DisplayLevel.WATCH -> Color(style.fill).copy(alpha = 0.18f) to Color(style.fill)
+        DisplayLevel.UNKNOWN -> Color(style.stroke).copy(alpha = 0.18f) to Color(style.stroke)
+        else -> Color(0xFF3A414C) to RadarColors.text
+    }
+    Row(
+        Modifier.clip(RoundedCornerShape(50)).background(bg).padding(horizontal = 10.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        LevelIcon(level, Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(style.label, color = fg, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row {
+        Text(label, color = RadarColors.subtext, fontSize = 13.sp, modifier = Modifier.width(72.dp))
+        Text(value, color = RadarColors.text, fontSize = 14.sp)
     }
 }
