@@ -18,6 +18,13 @@ data class ViewportConfig(
      * (차량 회전은 같은 변환을 거쳐 일관성을 유지하고, 차체 폭은 [VehicleGeometry.displayWidthM] 으로 보정)
      */
     val maxLateralExaggeration: Float = 5f,
+    /**
+     * 차선 점선·진행 방향 표시를 자차 주행거리만큼 뒤로 흘려 보낸다(기본 켬).
+     * 끄면 예전처럼 도로가 고정되어, 자차가 달리는 중에도 정지한 것처럼 보이고
+     * 자차보다 느린 차량이 후진하는 것처럼 보일 수 있다.
+     * 끌 때는 예측 경로도 [SceneOptions.trajectoryReference] = RELATIVE_TO_EGO 로 맞춘다.
+     */
+    val scrollRoadWithEgo: Boolean = true,
 )
 
 /** 화면 픽셀 좌표. y 는 아래로 증가. */

@@ -71,7 +71,7 @@ class AssetScenarioIntegrationTest {
     /** 03 시나리오는 예측·위험 파일 없이 01·02 엔진이 계산한다. */
     @Test fun sim03ScenariosAreComputedByEngines() {
         val sims = all().filter { it.first.startsWith("sim_") }
-        assertEquals(7, sims.size)
+        assertEquals(10, sims.size) // 03 시나리오 7종 + 차선 변경 안전 확인·취소, 정지 후 재출발 3종
         sims.forEach { (id, r) ->
             val t = (r as LoadResult.Ready).timeline
             assertTrue("$id issues=${t.issues}", t.issues.none { it.severity == Severity.WARNING && ("01@" in it.where || "02@" in it.where) })
@@ -81,6 +81,37 @@ class AssetScenarioIntegrationTest {
             assertTrue("$id: 02 입력이 막힌 차량이 있음", risks.none { "ENGINE02_INPUT_BLOCKED" in it.reasonCodes })
             assertTrue("$id: 01 예측 궤적 없음", t.vehicleFrames.any { t.snapshotAt(it.timestampMs).prediction?.predictions?.isNotEmpty() == true })
         }
+    }
+
+    /**
+     * 03·01·05 연동: 모든 시나리오의 lane_keep 예측이
+     *  - 한 차선 폭(4 m + 여유) 넘게 옆으로 뻗지 않고(여러 차선을 가로지르지 않음)
+     *  - 전방으로 진행 중인 차량을 후진으로 예측하지 않는다.
+     */
+    @Test fun laneKeepPredictionsStayInLaneAndNeverReverse() {
+        all().forEach { (id, r) ->
+            val t = (r as LoadResult.Ready).timeline
+            t.vehicleFrames.forEach { f ->
+                val byId = f.vehicles.associateBy { it.id }
+                t.snapshotAt(f.timestampMs).prediction?.predictions?.forEach { p ->
+                    val v = byId[p.vehicleId] ?: return@forEach
+                    val keep = p.trajectories.firstOrNull { it.mode == "lane_keep" } ?: return@forEach
+                    keep.points.forEach { pt ->
+                        assertTrue("$id@${f.timestampMs} ${p.vehicleId} 횡 ${pt.x - v.x}", abs(pt.x - v.x) <= 4.3)
+                        if (v.vy >= 0) assertTrue("$id@${f.timestampMs} ${p.vehicleId} 후진 예측", pt.y >= v.y - 0.05)
+                    }
+                }
+            }
+        }
+    }
+
+    /** 03 안전 확인 차선 변경 판단(방향지시등·취소·중단)이 앱 이벤트 주석으로 들어온다. */
+    @Test fun laneChangeDecisionsAppearAsAnnotations() {
+        val labels = (loader.load("sim_lane_change_cancel") as LoadResult.Ready).timeline.manifest.eventAnnotation.map { it.label }
+        assertTrue(labels.toString(), labels.any { "차선 변경 취소(시작 전)" in it })
+        assertTrue(labels.toString(), labels.any { "차선 변경 중단" in it })
+        val safe = (loader.load("sim_lane_change_safe") as LoadResult.Ready).timeline.manifest.eventAnnotation.map { it.label }
+        assertTrue(safe.toString(), safe.any { "방향지시등 켬" in it } && safe.any { "차선 변경 완료" in it })
     }
 
     @Test fun dropoutScenarioHasStaleWindowAndUnknown() {

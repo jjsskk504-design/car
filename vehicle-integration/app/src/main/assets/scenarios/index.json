@@ -1,1 +1,1 @@
-["normal","rear_approach","sudden_brake","lane_change","chain_reaction","dropout","sim_chain_reaction","sim_lane_change","sim_merge","sim_normal","sim_rear_approach","sim_sensor_dropout","sim_sudden_braking"]
+["normal","rear_approach","sudden_brake","lane_change","chain_reaction","dropout","sim_chain_reaction","sim_lane_change","sim_lane_change_cancel","sim_lane_change_safe","sim_merge","sim_normal","sim_rear_approach","sim_sensor_dropout","sim_stop_and_go","sim_sudden_braking"]

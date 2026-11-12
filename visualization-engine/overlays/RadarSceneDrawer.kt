@@ -36,7 +36,7 @@ import kotlin.math.roundToInt
  *
  * 주행 모드에서 화면 밖(보이지 않는) 차량의 궤적·영역은 그리지 않고, 가장자리에 방향·거리 표시만 남긴다.
  */
-fun DrawScope.drawRadarScene(scene: Scene, transform: ViewportTransform, textMeasurer: TextMeasurer?) {
+fun DrawScope.drawRadarScene(scene: Scene, transform: ViewportTransform, textMeasurer: TextMeasurer?, roadOffsetM: Float = 0f) {
     val inView: (SceneVehicle) -> Boolean = { transform.isVisibleY(it.center.y, marginM = 0f) }
     val byId = scene.vehicles.associateBy { it.id }
     val hiddenIds = if (scene.mode == DisplayMode.DRIVING) scene.vehicles.filter { !inView(it) }.map { it.id }.toSet() else emptySet()
@@ -45,7 +45,7 @@ fun DrawScope.drawRadarScene(scene: Scene, transform: ViewportTransform, textMea
         .sortedBy { if (it.isEgo) 99 else it.level.severity }
     val showId = scene.mode == DisplayMode.DETAIL
 
-    drawRoad(transform)
+    drawRoad(transform, roadOffsetM)
     val regions = scene.regions.filter { it.vehicleId !in hiddenIds }
     regions.filter { it.kind == RegionKind.OCCUPANCY }.forEach { drawRegion(it, transform) }
     regions.filter { it.kind == RegionKind.CONFLICT }.forEach { drawRegion(it, transform) }

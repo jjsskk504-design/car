@@ -51,7 +51,7 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
       }
     },
@@ -96,8 +96,158 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "lane_change_cancel",
+      "file": "lane_change_cancel.jsonl",
+      "ego_pose_file": "lane_change_cancel.ego_pose.jsonl",
+      "description": "차선 변경 취소 — 자차 바로 옆 차량은 진입 공간이 없어 시작 전 취소, 전방 차량은 진입하려던 차선의 앞차가 급제동해 진행 중 원래 차선으로 복귀",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 110,
+      "ego_id": "ego",
+      "vehicle_count": 5,
+      "vehicle_ids": [
+        "ego",
+        "car_41",
+        "car_42",
+        "car_43",
+        "car_44"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 2000,
+          "type": "request_lane_change",
+          "vehicle_id": "car_41",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "car_41 자차 차선 진입 요청(자차와 나란히 주행 중)"
+        },
+        {
+          "t_ms": 2200,
+          "type": "set_target_speed",
+          "vehicle_id": "car_43",
+          "value": 0,
+          "intentional": true,
+          "origin": "forced",
+          "note": "왼쪽 차선 car_43 급제동"
+        },
+        {
+          "t_ms": 3000,
+          "type": "request_lane_change",
+          "vehicle_id": "car_42",
+          "value": 0,
+          "intentional": true,
+          "origin": "forced",
+          "note": "car_42 왼쪽 차선으로 차선 변경 요청"
+        }
+      ],
+      "observed_collisions": [],
+      "lane_change_decisions": [
+        {
+          "t_ms": 2000,
+          "vehicle_id": "car_41",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "rejected",
+          "reason": "진입 공간 부족: 후방 ego 간격 5.4 m < 필요 18.0 m"
+        },
+        {
+          "t_ms": 3000,
+          "vehicle_id": "car_42",
+          "from_lane": "L2",
+          "to_lane": "L1",
+          "result": "accepted",
+          "reason": "방향지시등 켬 · 목표 차선 앞뒤 간격 확인"
+        },
+        {
+          "t_ms": 4240,
+          "vehicle_id": "car_42",
+          "from_lane": "L2",
+          "to_lane": "L1",
+          "result": "aborted",
+          "reason": "진행 중 위험 감지: 전방 car_43 때문에 예상 감속 -2.0 m/s²"
+        }
+      ],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
+        "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 차선 변경 요청은 MOBIL 안전 기준·최소 차간 시간으로 진입/취소/중단을 판단(lane_change_decisions)"
+      }
+    },
+    {
+      "scenario": "lane_change_safe",
+      "file": "lane_change_safe.jsonl",
+      "ego_pose_file": "lane_change_safe.ego_pose.jsonl",
+      "description": "오른쪽 차선 차량이 방향지시등을 켜고 앞뒤 간격을 확인한 뒤 자차 차선 전방으로 부드럽게 차선 변경",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 109,
+      "ego_id": "ego",
+      "vehicle_count": 5,
+      "vehicle_ids": [
+        "ego",
+        "car_31",
+        "car_32",
+        "car_33",
+        "car_34"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 2000,
+          "type": "request_lane_change",
+          "vehicle_id": "car_31",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "car_31 자차 차선으로 차선 변경 요청"
+        }
+      ],
+      "observed_collisions": [],
+      "lane_change_decisions": [
+        {
+          "t_ms": 2000,
+          "vehicle_id": "car_31",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "accepted",
+          "reason": "방향지시등 켬 · 목표 차선 앞뒤 간격 확인"
+        },
+        {
+          "t_ms": 5300,
+          "vehicle_id": "car_31",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "completed",
+          "reason": "목표 차선 중앙 정렬 · 방향지시등 끔"
+        }
+      ],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
+        "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 차선 변경 요청은 MOBIL 안전 기준·최소 차간 시간으로 진입/취소/중단을 판단(lane_change_decisions)"
       }
     },
     {
@@ -150,7 +300,7 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
       }
     },
@@ -185,7 +335,7 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
       }
     },
@@ -230,7 +380,7 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
       }
     },
@@ -294,8 +444,96 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+      }
+    },
+    {
+      "scenario": "stop_and_go",
+      "file": "stop_and_go.jsonl",
+      "ego_pose_file": "stop_and_go.ego_pose.jsonl",
+      "description": "정체로 정지한 자차 — 옆 차선 차량 통과, 후방 차량 접근 후 정지, 옆 차선 차량이 간격 확인 뒤 자차 앞으로 진입, 이후 재출발",
+      "duration_ms": 12000,
+      "step_ms": 100,
+      "sim_substep_ms": 20.0,
+      "frame_count": 121,
+      "seed": 108,
+      "ego_id": "ego",
+      "vehicle_count": 5,
+      "vehicle_ids": [
+        "ego",
+        "car_21",
+        "car_22",
+        "car_23",
+        "car_24"
+      ],
+      "lane_id_map": {
+        "L1": "highway-env lane ('0','1',0), 왼쪽에서 1번째",
+        "L2": "highway-env lane ('0','1',1), 왼쪽에서 2번째",
+        "L3": "highway-env lane ('0','1',2), 왼쪽에서 3번째"
+      },
+      "event_annotation": [
+        {
+          "t_ms": 5000,
+          "type": "request_lane_change",
+          "vehicle_id": "car_22",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "car_22 자차 차선 진입 요청(정지한 자차 뒤쪽 · 간격 부족 예상)"
+        },
+        {
+          "t_ms": 8500,
+          "type": "request_lane_change",
+          "vehicle_id": "car_22",
+          "value": 1,
+          "intentional": true,
+          "origin": "forced",
+          "note": "car_22 자차 앞쪽으로 다시 진입 요청"
+        },
+        {
+          "t_ms": 9500,
+          "type": "set_target_speed",
+          "vehicle_id": "ego",
+          "value": 10,
+          "intentional": true,
+          "origin": "forced",
+          "note": "자차 재출발"
+        }
+      ],
+      "observed_collisions": [],
+      "lane_change_decisions": [
+        {
+          "t_ms": 5000,
+          "vehicle_id": "car_22",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "rejected",
+          "reason": "진입 공간 부족: 전방 car_23 간격 1.5 m < 필요 11.6 m"
+        },
+        {
+          "t_ms": 8500,
+          "vehicle_id": "car_22",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "accepted",
+          "reason": "방향지시등 켬 · 목표 차선 앞뒤 간격 확인"
+        },
+        {
+          "t_ms": 11760,
+          "vehicle_id": "car_22",
+          "from_lane": "L3",
+          "to_lane": "L2",
+          "result": "completed",
+          "reason": "목표 차선 중앙 정렬 · 방향지시등 끔"
+        }
+      ],
+      "provenance": {
+        "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
+        "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
+        "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
+        "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 차선 변경 요청은 MOBIL 안전 기준·최소 차간 시간으로 진입/취소/중단을 판단(lane_change_decisions)"
       }
     },
     {
@@ -339,7 +577,7 @@
         "engine": "PRISM simulation-engine 0.2.0 (Kotlin/JVM)",
         "simulator": "highway-env 1.12.1 (MIT) 차량 모델을 Kotlin으로 이식",
         "data_source": "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)",
-        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)",
+        "forced_behavior": "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)",
         "natural_behavior": "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
       }
     }

@@ -1,0 +1,14 @@
+name: lane_change_safe
+description: 오른쪽 차선 차량이 방향지시등을 켜고 앞뒤 간격을 확인한 뒤 자차 차선 전방으로 부드럽게 차선 변경
+seed: 109
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 22}
+vehicles:
+  - {id: car_31, lane: 2, x: 255, speed: 22}
+  - {id: car_32, lane: 1, x: 330, speed: 22}
+  - {id: car_33, lane: 0, x: 210, speed: 23}
+  - {id: car_34, lane: 2, x: 170, speed: 22}
+events:
+  - {t_s: 2, type: request_lane_change, vehicle: car_31, value: 1, note: car_31 자차 차선으로 차선 변경 요청}

@@ -30,7 +30,7 @@ private fun EventSpec.activeAt(tMs: Int) = tS * 1000 <= tMs && tMs < (tEndS ?: D
 
 /** 시나리오를 실행해 VehicleFrame v1 목록, 자차 월드 자세, 매니페스트 항목을 만든다. */
 fun run(sc: Scenario): RunResult {
-    val (worldFrames, collisions) = simulate(sc)
+    val (worldFrames, collisions, decisions) = simulate(sc)
     val outEvents = sc.events.filter { it.type in OUTPUT_EVENTS }
     val rng = Random(sc.seed)
     val frames = mutableListOf<JsonObject>()
@@ -104,13 +104,26 @@ fun run(sc: Scenario): RunResult {
         putJsonArray("observed_collisions") {
             for (c in collisions) addJsonObject { put("t_ms", c.tMs); put("vehicle_id", c.vehicleId) }
         }
+        // request_lane_change 에 대한 시뮬레이터의 판단(진입·취소·중단·완료). 강제 이벤트가 아니라 안전 기준에 따른 결과.
+        // VehicleFrame v1 에 방향지시등 필드가 없어 accepted~completed 구간을 방향지시등 점등 구간으로 여기에 기록한다.
+        if (decisions.isNotEmpty()) putJsonArray("lane_change_decisions") {
+            for (d in decisions) addJsonObject {
+                put("t_ms", d.tMs)
+                put("vehicle_id", d.vehicleId)
+                put("from_lane", laneId(d.fromLane))
+                put("to_lane", laneId(d.toLane))
+                put("result", d.result)
+                put("reason", d.reason)
+            }
+        }
         putJsonObject("provenance") {
             put("engine", "PRISM simulation-engine $ENGINE_VERSION (Kotlin/JVM)")
             put("simulator", "highway-env $HIGHWAY_ENV_VERSION (MIT) 차량 모델을 Kotlin으로 이식")
             put("data_source", "synthetic simulation (실제 주행·실차 ADAS 데이터 아님)")
             // 강제(forced) = event_annotation 에 적힌 것만. 그 외 모든 움직임은 시뮬레이터 자연 행동.
-            put("forced_behavior", "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령, 센서 누락·노이즈 주입)")
-            put("natural_behavior", "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠")
+            put("forced_behavior", "event_annotation 의 이벤트(목표속도 변경, 차선 변경 명령·요청, 센서 누락·노이즈 주입)")
+            put("natural_behavior", if (decisions.isEmpty()) "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 자동 차선변경(MOBIL)은 꺼둠"
+                else "highway-env IDM 종방향 반응(감속·추종)과 차선 추종 조향. 차선 변경 요청은 MOBIL 안전 기준·최소 차간 시간으로 진입/취소/중단을 판단(lane_change_decisions)")
         }
     }
     return RunResult(frames, poses, manifest)

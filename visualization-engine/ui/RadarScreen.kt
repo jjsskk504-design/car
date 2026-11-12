@@ -4,12 +4,14 @@ import ai.prism.visualization.model.PredictionFrame
 import ai.prism.visualization.model.RiskFrame
 import ai.prism.visualization.model.RoadConfig
 import ai.prism.visualization.model.VehicleFrame
+import ai.prism.visualization.overlays.ROAD_PATTERN_PERIOD_M
 import ai.prism.visualization.overlays.RadarColors
 import ai.prism.visualization.overlays.RiskOverlay.drawRiskIcon
 import ai.prism.visualization.overlays.drawRadarScene
 import ai.prism.visualization.rendering.DisplayLevel
 import ai.prism.visualization.rendering.DisplayMode
 import ai.prism.visualization.rendering.RiskStyle
+import ai.prism.visualization.rendering.RoadOdometer
 import ai.prism.visualization.rendering.Scene
 import ai.prism.visualization.rendering.SceneBuilder
 import ai.prism.visualization.rendering.SceneOptions
@@ -101,6 +103,12 @@ fun RadarSceneView(
         if (showStatusBar) RadarStatusBar(scene, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
         // 차량 ID·아이콘 글자 레이아웃 캐시(기본 8개는 차량 수보다 작아 매 프레임 재측정됨)
         val tm = rememberTextMeasurer(cacheSize = 256)
+        // 자차 주행거리만큼 도로 표식을 흘려 보낸다(자차 고정 화면에서 자차가 정지한 것처럼 보이지 않도록)
+        val odometer = remember { RoadOdometer() }
+        val roadOffsetM = remember(scene, config.viewport.scrollRoadWithEgo) {
+            if (!config.viewport.scrollRoadWithEgo) 0f
+            else (odometer.advance(scene.timestampMs, scene.egoSpeedMps) % ROAD_PATTERN_PERIOD_M).toFloat()
+        }
         Canvas(
             Modifier
                 .weight(1f)
@@ -123,7 +131,7 @@ fun RadarSceneView(
                 },
         ) {
             val t = ViewportTransform(size.width, size.height, config.road, config.viewport)
-            drawRadarScene(scene, t, tm)
+            drawRadarScene(scene, t, tm, roadOffsetM)
         }
     }
 }

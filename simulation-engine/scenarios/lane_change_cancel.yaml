@@ -1,0 +1,16 @@
+name: lane_change_cancel
+description: 차선 변경 취소 — 자차 바로 옆 차량은 진입 공간이 없어 시작 전 취소, 전방 차량은 진입하려던 차선의 앞차가 급제동해 진행 중 원래 차선으로 복귀
+seed: 110
+duration_s: 12
+step_ms: 100
+lanes: 3
+ego: {lane: 1, x: 200, speed: 22}
+vehicles:
+  - {id: car_41, lane: 2, x: 208, speed: 22}
+  - {id: car_42, lane: 1, x: 270, speed: 18}
+  - {id: car_43, lane: 0, x: 320, speed: 20}
+  - {id: car_44, lane: 0, x: 160, speed: 21}
+events:
+  - {t_s: 2, type: request_lane_change, vehicle: car_41, value: 1, note: car_41 자차 차선 진입 요청(자차와 나란히 주행 중)}
+  - {t_s: 2.2, type: set_target_speed, vehicle: car_43, value: 0, note: 왼쪽 차선 car_43 급제동}
+  - {t_s: 3, type: request_lane_change, vehicle: car_42, value: 0, note: car_42 왼쪽 차선으로 차선 변경 요청}

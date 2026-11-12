@@ -64,7 +64,8 @@ class IdentityTest {
         val names = Files.list(ROOT.resolve("samples")).use { s -> s.map { it.fileName.toString() }.toList() }
             .filter { it.endsWith(".jsonl") && !it.endsWith(".ego_pose.jsonl") }.toSet()
         assertEquals(
-            listOf("normal", "sudden_braking", "rear_approach", "lane_change", "merge", "chain_reaction", "sensor_dropout").map { "$it.jsonl" }.toSet(),
+            listOf("normal", "sudden_braking", "rear_approach", "lane_change", "merge", "chain_reaction", "sensor_dropout",
+                "lane_change_safe", "lane_change_cancel", "stop_and_go").map { "$it.jsonl" }.toSet(),
             names,
         )
     }

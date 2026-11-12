@@ -86,6 +86,8 @@ data class Scene(
     val notices: List<SceneNotice>,
     /** 현재 시각(nowMs) 기준 VehicleFrame 의 나이(ms). nowMs 를 주지 않으면 null. */
     val dataAgeMs: Long? = null,
+    /** 자차 전방 속도(m/s, VehicleFrame 자차 vy). 값이 없거나 비정상이면 null. 도로 스크롤에만 쓴다. */
+    val egoSpeedMps: Float? = null,
 ) {
     /** 데이터 지연 또는 RiskFrame 시각 불일치로 위험 표시를 보류 중인지. */
     val stale: Boolean
@@ -111,15 +113,19 @@ data class Scene(
 
 /**
  * 예측 궤적 표시 기준.
- * - RELATIVE_TO_EGO: 자차가 현재 속도를 유지한다고 보고 자차 이동량을 빼서 "나와의 상대 위치 변화"로 그린다(기본).
- *   자차 고정 화면에서 지면 기준 미래 위치를 그리면 모든 차량이 앞으로 질주하는 것처럼 보여 위험 관계가 읽히지 않는다.
- * - AS_GIVEN: PredictionFrame 좌표를 그대로 그린다.
- * 위험 영역(risk_zones)도 각 dt_ms 에 맞춰 같은 기준으로 변환한다.
+ * - AS_GIVEN(기본): PredictionFrame 좌표(현재 시각 자차 좌표계에 고정된 지면 기준 미래 위치)를 그대로 그린다.
+ *   도로 표식이 자차 주행거리만큼 흐르는 화면([ViewportConfig.scrollRoadWithEgo])과 같은 기준이라
+ *   직진 차량의 경로는 차선을 따라 앞으로, 차선 변경 차량의 경로는 실제 진행 방향으로 그려진다.
+ * - RELATIVE_TO_EGO: 자차 이동량(자차 속도 × dt)을 빼서 "나와의 상대 위치 변화"로 그린다.
+ *   도로를 고정해 그릴 때만 쓴다. 도로가 흐르는 화면에서 쓰면 자차보다 느린 차량의 경로가 진행 방향과 반대(뒤)나
+ *   옆으로 누워 그려져, 차량이 여러 차선을 가로질러 파고드는 것처럼 보인다.
+ * 위험 영역(risk_zones)도 각 dt_ms 에 맞춰 같은 기준으로 변환하고, 충돌 영역 판정은 어느 기준이든
+ * 같은 시점의 자차 위치와 겹치는지로 계산한다(결과 동일).
  */
 enum class TrajectoryReference { RELATIVE_TO_EGO, AS_GIVEN }
 
 data class SceneOptions(
-    val trajectoryReference: TrajectoryReference = TrajectoryReference.RELATIVE_TO_EGO,
+    val trajectoryReference: TrajectoryReference = TrajectoryReference.AS_GIVEN,
     /** VehicleFrame 이 이 시간보다 오래되면 '데이터 지연'으로 보고 위험 강조를 보류한다. */
     val staleAfterMs: Long = 500,
     /** VehicleFrame 과 RiskFrame 시각 차이 허용치. */
@@ -283,7 +289,8 @@ object SceneBuilder {
         // 원인 차량 표시는 자차 위험(강조 대상)과 실제로 연결된 관계의 시작 차량에만
         val sourceIds = relations.map { it.fromId }.toSet()
         val finalVehicles = if (sourceIds.isEmpty()) sceneVehicles else sceneVehicles.map { if (it.id in sourceIds) it.copy(isSource = true) else it }
-        return Scene(vehicleFrame.timestampMs, mode, finalVehicles, ghosts, trajectories, regions, relations, notices, dataAgeMs)
+        val egoSpeed = egoState?.vy?.takeIf { it.isFinite() }
+        return Scene(vehicleFrame.timestampMs, mode, finalVehicles, ghosts, trajectories, regions, relations, notices, dataAgeMs, egoSpeed)
     }
 
     private fun defaultEgo(id: String = "ego"): SceneVehicle {

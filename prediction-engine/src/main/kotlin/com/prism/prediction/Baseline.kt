@@ -1,5 +1,6 @@
 package com.prism.prediction
 
+import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.hypot
 
@@ -12,6 +13,11 @@ data class PredictionConfig(
     val laneWidthM: Double = 3.5,
     val laneChangeDurationS: Double = 4.0,
     val roadCurvaturePerM: Double = 0.0,
+    /**
+     * 도로(차선) 진행 방향. VehicleFrame v1 은 ego_local_m(자차 전방 = +y, heading π/2)이므로 기본값 π/2.
+     * lane_keep 예측은 이 축으로 종·횡 성분을 나눠, 횡이동은 한 차선 폭 안에서 멈추고 종방향은 정지에서 멈춘다(후진 없음).
+     */
+    val roadHeadingRad: Double = PI / 2,
 ) {
     init {
         require(horizonsMs.isNotEmpty() && horizonsMs.all { it in 1..5000 }) {

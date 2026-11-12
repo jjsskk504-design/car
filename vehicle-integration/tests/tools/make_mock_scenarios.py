@@ -33,7 +33,7 @@ class Car:
         self.follow = follow                      # 같은 차선 앞차를 따라가는 단순 추종
         self.a = 0.0
         self.vx = 0.0
-        self.target_x, self.lc_rate = self.x, 0.0
+        self.lc = None  # 진행 중인 차선 변경 (시작 t, 시작 x, 목표 x, 소요 s)
 
     def lane_id(self):
         return min(LANE, key=lambda k: abs(LANE[k] - self.x))
@@ -59,12 +59,19 @@ def step(cars, t, cruise):
         c.a = a
         for start, lane, dur in c.lane_plan:
             if abs(t - start) < DT / 2:
-                c.target_x, c.lc_rate = LANE[lane], abs(LANE[lane] - c.x) / dur
+                c.lc = (t, c.x, LANE[lane], dur)
     for c in cars:
         c.v = max(0.0, c.v + c.a * DT)
-        dx = c.target_x - c.x
-        c.vx = math.copysign(min(abs(dx) / DT, c.lc_rate), dx) if abs(dx) > 1e-6 else 0.0
-        c.x += c.vx * DT
+        if c.lc:
+            # 최소 저크(5차 다항식) 차선 변경: 횡속도가 0 에서 시작해 0 으로 끝나고 목표 차선 중앙에 정렬된다
+            t0, x0, x1, dur = c.lc
+            s = min(max((t - t0) / dur, 0.0), 1.0)
+            c.x = x0 + (x1 - x0) * (10 * s ** 3 - 15 * s ** 4 + 6 * s ** 5)
+            c.vx = (x1 - x0) * (30 * s ** 2 - 60 * s ** 3 + 30 * s ** 4) / dur if s < 1.0 else 0.0
+            if s >= 1.0:
+                c.x, c.lc = x1, None
+        else:
+            c.vx = 0.0
         c.y += c.v * DT
 
 
@@ -81,8 +88,13 @@ def vehicle_json(c, ego):
     }
 
 
+LANE_W = 3.6
+LAT_TAU = 4.0 / 3.0  # 01 prediction-engine 의 lane_keep 횡방향 모델과 같은 시간상수(laneChangeDurationS/3)
+
+
 def predict(v, a):
-    """MOCK 예측: lane_keep(등속) + 감속 중이면 braking(등가속)."""
+    """MOCK 예측: lane_keep(등속) + 감속 중이면 braking(등가속).
+    횡방향은 현재 횡속도가 LAT_TAU 로 줄어드는 차선 정렬 모델(총 횡이동 한 차선 이내) — 여러 차선을 가로지르지 않는다."""
     def pts(acc):
         out = []
         for k in range(1, 6):
@@ -91,10 +103,15 @@ def predict(v, a):
                 t_stop = v["vy"] / -acc
                 tt = min(t, t_stop)
                 dy = v["vy"] * tt + 0.5 * acc * tt * tt
+                vy_t = v["vy"] + acc * tt
             else:
                 dy = v["vy"] * t
-            out.append({"dt_ms": k * 1000, "x": r3(v["x"] + v["vx"] * min(t, 3)), "y": r3(v["y"] + dy),
-                        "heading_rad": v["heading_rad"]})
+                vy_t = v["vy"]
+            raw = v["vx"] * LAT_TAU * (1 - math.exp(-t / LAT_TAU))
+            lat = max(-LANE_W, min(LANE_W, raw))
+            vx_t = 0.0 if abs(raw) >= LANE_W else v["vx"] * math.exp(-t / LAT_TAU)
+            heading = v["heading_rad"] if v["vx"] == 0 else r3(math.atan2(vy_t, vx_t))
+            out.append({"dt_ms": k * 1000, "x": r3(v["x"] + lat), "y": r3(v["y"] + dy), "heading_rad": heading})
         return out
     trajs = [{"mode": "lane_keep", "confidence": None, "points": pts(0.0)}]
     if a < -1.0:
@@ -209,9 +226,10 @@ def main():
         Car("car_03", "L3", -5, 25), Car("car_04", "L1", -25, 25), Car("car_05", "L3", 35, 25)],
         [(3000, "car_01 급감속 -7 m/s²"), (5500, "car_01 감속 종료")]))
     scenarios.append(run("lane_change", "옆 차선 끼어들기", [
-        ego(), Car("car_02", "L3", 18, 23, lane_plan=[(3.0, "L2", 2.5)]), Car("car_01", "L2", 50, 25),
+        # 위험 연출용 끼어들기: 간격이 부족한 상태에서 들어오지만, 궤적 자체는 3.5초 곡선 차선 변경(최소 저크)이다
+        ego(), Car("car_02", "L3", 18, 23, lane_plan=[(3.0, "L2", 3.5)]), Car("car_01", "L2", 50, 25),
         Car("car_03", "L1", 5, 25), Car("car_04", "L1", -20, 25), Car("car_05", "L3", -15, 25)],
-        [(3000, "car_02 자차 차선으로 차선 변경 시작"), (5500, "차선 변경 완료")]))
+        [(3000, "car_02 간격이 부족한 상태로 자차 차선 끼어들기 시작"), (6500, "차선 변경 완료")]))
     scenarios.append(run("chain_reaction", "화물차 급감속 연쇄 위험", [
         ego(), Car("car_01", "L2", 24, 25, follow=True), Car("truck", "L2", 55, 24, length=12.0, width=2.5, accel=brake(2.5, 5.0, -6.0)),
         Car("car_02", "L1", 8, 25), Car("car_03", "L3", 30, 25, lane_plan=[(4.5, "L2", 3.0)]), Car("car_04", "L1", -20, 25)],
@@ -224,7 +242,10 @@ def main():
         drop_frames=[(4000, 5500)], drop_vehicle=("car_02", 7000, 8000), unknown=("car_03", 2000, 3000)))
 
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "index.json").write_text(json.dumps([m["scenario_id"] for m, *_ in scenarios]), encoding="utf-8")
+    index = OUT / "index.json"
+    # importSim03 이 추가한 sim_* 항목은 유지한다(MOCK 만 다시 만든다)
+    sims = [s for s in json.loads(index.read_text(encoding="utf-8")) if s.startswith("sim_")] if index.exists() else []
+    index.write_text(json.dumps([m["scenario_id"] for m, *_ in scenarios] + sims, separators=(",", ":")), encoding="utf-8")
     make_fixtures(scenarios[0])
     for m, vf, pf, rf in scenarios:
         levels = {}

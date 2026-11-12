@@ -30,9 +30,22 @@ fun main(args: Array<String>) {
         val dir = File(scenariosDir, id).apply { mkdirs() }
         File(samples, s.str("file")!!).copyTo(File(dir, "vehicle_frames.jsonl"), overwrite = true)
         File(samples, s.str("ego_pose_file")!!).copyTo(File(dir, "ego_pose.jsonl"), overwrite = true)
-        val events = s["event_annotation"]?.jsonArray.orEmpty().map { it.jsonObject }.map { e ->
+        val forced = s["event_annotation"]?.jsonArray.orEmpty().map { it.jsonObject }.map { e ->
             EventAnnotation(e.getValue("t_ms").jsonPrimitive.long, e.str("note") ?: "${e.str("type")} ${e.str("vehicle_id")}")
         }
+        // 03 시뮬레이터의 차선 변경 판단(안전 기준 결과). VehicleFrame v1 에 방향지시등 필드가 없어 주석으로 보여 준다.
+        val decided = s["lane_change_decisions"]?.jsonArray.orEmpty().map { it.jsonObject }.map { d ->
+            val what = when (d.str("result")) {
+                "accepted" -> "방향지시등 켬 · 차선 변경 시작"
+                "rejected" -> "차선 변경 취소(시작 전)"
+                "aborted" -> "차선 변경 중단 · 원래 차선 복귀"
+                "completed" -> "차선 변경 완료"
+                else -> d.str("result")
+            }
+            val reason = d.str("reason")?.takeIf { d.str("result") in setOf("rejected", "aborted") }?.let { " — $it" }.orEmpty()
+            EventAnnotation(d.getValue("t_ms").jsonPrimitive.long, "${d.str("vehicle_id")} ${d.str("from_lane")}→${d.str("to_lane")} $what$reason")
+        }
+        val events = if (decided.isEmpty()) forced else (forced + decided).sortedBy { it.tMs }
         val engine = s["provenance"]?.jsonObject?.str("engine") ?: "simulation-engine"
         val manifest = ScenarioManifest(
             scenarioId = id,
